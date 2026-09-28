@@ -1,0 +1,26 @@
+# Secrets & Configs
+*.env
+*.local.yaml
+*.local.json
+secrets/
+credentials/
+
+# Python / ROS / Micro-ROS build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+install/
+build/
+log/
+
+# C++ / Arduino / PlatformIO
+.pio/
+.vscode/
+*.o
+*.a
+*.so
+
+# OS / Editor artifacts
+.DS_Store
+Thumbs.db
