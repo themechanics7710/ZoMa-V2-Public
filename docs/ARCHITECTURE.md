@@ -110,8 +110,7 @@ IMU yaw are designed into the platform — the chassis reserves mast slots for a
 lidar (§1) and the mechanical/power headroom for the sensors it needs — but are
 not implemented in this build. They're planned for a second build season,
 running as ROS 2 nodes on the Raspberry Pi and Monster. See
-[`docs/EQUIPMENT.md`](EQUIPMENT.md) for what's confirmed vs. planned by build
-day.
+[`docs/EQUIPMENT.md`](EQUIPMENT.md) for the full parts list by build day.
 
 ## 5. Repository structure
 
