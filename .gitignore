@@ -1,3 +1,6 @@
+# ZoMa — repository-wide ignore rules.
+# Property of TheMechanics. Contact: mamau.mechanics@gmail.com
+
 # Secrets & Configs
 *.env
 *.local.yaml
@@ -24,3 +27,16 @@ log/
 # OS / Editor artifacts
 .DS_Store
 Thumbs.db
+
+# Runtime data that must never be committed to this public repo:
+# recorded audio, conversation memory, and captured photos.
+*.wav
+*.mp3
+*.faiss
+monster/zoma-brain/data/**
+!monster/zoma-brain/data/.gitkeep
+!monster/zoma-brain/data/**/.gitkeep
+monster/zoma-brain/pictures/*
+!monster/zoma-brain/pictures/.gitkeep
+pi/scripts/zoma-audio-led/sounds/*
+!pi/scripts/zoma-audio-led/sounds/.gitkeep

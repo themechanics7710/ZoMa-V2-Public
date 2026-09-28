@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<!--
+  ZoMa web dashboard — live camera feed, chat interface, and status HUD.
+  Property of TheMechanics. Contact: mamau.mechanics@gmail.com
+
+  Single-page dashboard: an iframe of the robot's live camera stream with a
+  canvas HUD overlay, a chat panel that talks to the ZoMa Brain server over
+  WebSocket, and a second WebSocket for live status (Wi-Fi, mic, speaker).
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ZoMa AI Terminal</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #080a10;
+            --chat-bg: #12141c;
+            --panel-bg: #0b0d14;
+            --text-color: #e0e6ed;
+            --input-bg: #1e212b;
+            --user-bubble: #1e40af;
+            --ai-bubble: #232736;
+            --ai-name: #f6d365;
+            --filler-color: #7b8496;
+            --border-color: #2a2e3d;
+            --live-green: #3ddc84;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            height: 100dvh; width: 100vw; overflow: hidden;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color); color: var(--text-color);
+            display: flex; justify-content: center; align-items: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #app-container {
+            width: 100%; height: 100%;
+            background-color: var(--chat-bg);
+            display: flex; flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            position: relative;
+        }
+
+        @media (min-width: 900px) {
+            #app-container { max-width: 1800px; height: 95vh; border-radius: 12px; overflow: hidden; flex-direction: row; }
+        }
+
+        /* ============ CAMERA PANEL ============ */
+        #camera-panel {
+            position: relative;
+            width: 100%;
+            height: 240px;
+            background: #000;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+            overflow: hidden;
+            contain: paint layout;
+        }
+
+        #camera-header {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 12px;
+            font-size: 12px; font-weight: 600; letter-spacing: 0.4px;
+            background: rgba(11, 13, 20, 0.85);
+            position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+            color: #f0f2f6;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            pointer-events: none;
+        }
+
+        .live-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--live-green);
+            box-shadow: 0 0 6px var(--live-green);
+            flex-shrink: 0;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        #camera-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* Hardware-isolated iframe layer */
+        #camera-frame {
+            width: 100%; height: 100%;
+            border: none; outline: none;
+            display: block;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: transform;
+        }
+
+        /* Hardware-isolated HUD canvas overlay */
+        #hud-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: transform;
+        }
+
+        @media (min-width: 900px) {
+            #camera-panel {
+                width: 80%;
+                max-width: none;
+                height: 100%;
+                border-bottom: none;
+                border-right: 1px solid var(--border-color);
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+
+            #camera-header { padding: 10px 14px; font-size: 13px; }
+
+            #chat-panel {
+                width: 20%;
+                flex: none;
+            }
+        }
+
+        /* ============ CHAT PANEL ============ */
+        #chat-panel {
+            display: flex; flex-direction: column;
+            flex: 1; min-height: 0; width: 100%;
+        }
+
+        #chat-window {
+            flex: 1; padding: 20px 30px; overflow-y: auto; scroll-behavior: smooth;
+            display: flex; flex-direction: column; gap: 24px;
+        }
+
+        .message-row { display: flex; flex-direction: column; width: 100%; }
+        .row-user { align-items: flex-end; }
+        .row-ai { align-items: flex-start; }
+
+        .name-tag { font-weight: 600; margin-bottom: 6px; font-size: 13px; letter-spacing: 0.5px; opacity: 0.8; }
+        .row-user .name-tag { display: none; }
+        .row-ai .name-tag { color: var(--ai-name); margin-left: 4px; }
+
+        .message-content {
+            padding: 14px 18px; border-radius: 16px; max-width: 85%;
+            word-wrap: break-word; font-size: 16px; line-height: 1.5;
+            animation: stretchIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            user-select: text !important;
+            -webkit-user-select: text !important;
+        }
+
+        .message-content p { margin: 0 0 10px 0; }
+        .message-content p:last-child { margin: 0; }
+        .message-content h1, .message-content h2, .message-content h3 { margin: 15px 0 8px 0; font-size: 1.1em; color: var(--ai-name); }
+        .message-content ul, .message-content ol { margin: 5px 0 10px 20px; padding: 0; }
+        .message-content strong { color: #ffffff; font-weight: 700; }
+        .message-content pre { background: #0b0d14; padding: 10px; border-radius: 6px; overflow-x: auto; margin: 10px 0; border: 1px solid #2a2e3d; }
+        .message-content code { font-family: Consolas, Monaco, monospace; background: #0b0d14; padding: 2px 4px; border-radius: 4px; font-size: 0.9em; }
+
+        .row-user .message-content { background-color: var(--user-bubble); border-bottom-right-radius: 4px; transform-origin: right center; }
+        .row-ai .message-content { background-color: var(--ai-bubble); border-bottom-left-radius: 4px; transform-origin: left center; }
+
+        @keyframes stretchIn {
+            from { opacity: 0; transform: scaleX(0.4) scaleY(0.8); }
+            to { opacity: 1; transform: scaleX(1) scaleY(1); }
+        }
+
+        .typing-indicator {
+            display: flex; gap: 4px; padding: 14px 20px;
+            background-color: var(--ai-bubble);
+            border-radius: 16px; border-bottom-left-radius: 4px;
+            width: fit-content; align-items: center;
+            transform-origin: left center;
+            animation: stretchIn 0.2s ease-out forwards;
+            height: 20px;
+        }
+
+        .wave-bar {
+            width: 4px; height: 100%;
+            background-color: var(--ai-name);
+            border-radius: 2px;
+            animation: waveform 1s infinite ease-in-out;
+            box-shadow: 0 0 5px rgba(246, 211, 101, 0.3);
+        }
+
+        .wave-bar:nth-child(1) { animation-delay: -0.8s; }
+        .wave-bar:nth-child(2) { animation-delay: -0.6s; }
+        .wave-bar:nth-child(3) { animation-delay: -0.4s; }
+        .wave-bar:nth-child(4) { animation-delay: -0.2s; }
+
+        @keyframes waveform {
+            0%, 100% { transform: scaleY(0.3); opacity: 0.5; box-shadow: 0 0 0px rgba(246, 211, 101, 0); }
+            50% { transform: scaleY(1); opacity: 1; box-shadow: 0 0 8px rgba(246, 211, 101, 0.8); }
+        }
+
+        .filler-text { font-size: 13px; font-style: italic; color: var(--filler-color); margin-left: 10px; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        #input-area {
+            display: flex; align-items: flex-end;
+            padding: 15px 25px; background-color: var(--input-bg); border-top: 1px solid var(--border-color); gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .input-prefix { font-weight: 600; font-size: 16px; color: #4facfe; user-select: none; margin-bottom: 3px; }
+
+        #chat-input {
+            flex: 1; background-color: transparent; color: var(--text-color);
+            border: none; font-size: 16px; outline: none; font-family: inherit;
+            resize: none; overflow-y: hidden;
+            line-height: 1.5; padding: 0; margin-bottom: 2px;
+            min-height: 24px; max-height: 200px;
+        }
+
+        #chat-input:focus { overflow-y: auto; }
+        #chat-input:disabled { opacity: 0.5; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #3b4054; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <div id="camera-panel">
+            <div id="camera-header">
+                <span class="live-dot"></span>
+                <span id="camera-label">ZoMa — Live Feed</span>
+            </div>
+            <iframe
+                id="camera-frame"
+                src="http://rb1.local:8889/cam/"
+                allow="autoplay; fullscreen"
+                loading="eager">
+            </iframe>
+            <canvas id="hud-canvas"></canvas>
+        </div>
+
+        <div id="chat-panel">
+            <div id="chat-window"></div>
+            <div id="input-area">
+                <span class="input-prefix" id="input-prefix">TheMechanics:</span>
+                <textarea id="chat-input" rows="1" placeholder="Type message... (Shift + Enter for new line)" autocomplete="off" disabled></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- SHARED STATE EVENT BUS -->
+    <script>
+        window.ZoMaState = {
+            brainConnected: false,
+            listeners: new Set(),
+            setBrainConnected(status) {
+                if (this.brainConnected !== status) {
+                    this.brainConnected = status;
+                    this.listeners.forEach(cb => cb(status));
+                }
+            },
+            onBrainStatusChange(cb) {
+                this.listeners.add(cb);
+            }
+        };
+    </script>
+
+    <!-- BRAIN CHAT WEBSOCKET -->
+    <script>
+        (() => {
+            // Set this to the LAN address (or hostname) of the machine running
+            // zoma_brain_server.py.
+            const SERVER_IP = "<YOUR_ZOMA_BRAIN_HOST>";
+            const SERVER_PORT = 8765;
+            const SPEAKER_NAME = "TheMechanics";
+
+            const chatWindow = document.getElementById('chat-window');
+            const chatInput = document.getElementById('chat-input');
+
+            let ws = null;
+            let currentStatusNode = null;
+            let activeStreamContentNode = null;
+            let activeStreamRawText = "";
+            let AI_NAME = "Clorian";
+
+            marked.setOptions({ breaks: true, gfm: true });
+
+            function setInlineStatus(text, show) {
+                if (!show) {
+                    if (currentStatusNode) { currentStatusNode.remove(); currentStatusNode = null; }
+                    return;
+                }
+                if (currentStatusNode) {
+                    const textSpan = currentStatusNode.querySelector('.filler-text');
+                    if (textSpan) textSpan.innerText = text;
+                    chatWindow.scrollTop = chatWindow.scrollHeight;
+                    return;
+                }
+                currentStatusNode = document.createElement('div');
+                currentStatusNode.className = 'message-row row-ai';
+
+                const nameTag = document.createElement('div');
+                nameTag.className = 'name-tag';
+                nameTag.innerText = AI_NAME;
+
+                const indicator = document.createElement('div');
+                indicator.className = 'typing-indicator';
+                indicator.innerHTML = `
+                    <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                    <span class="filler-text">${text}</span>
+                `;
+
+                currentStatusNode.appendChild(nameTag);
+                currentStatusNode.appendChild(indicator);
+                chatWindow.appendChild(currentStatusNode);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+
+            function createMessageBubble(sender) {
+                const row = document.createElement('div');
+                row.className = sender === SPEAKER_NAME ? 'message-row row-user' : 'message-row row-ai';
+
+                const nameTag = document.createElement('div');
+                nameTag.className = 'name-tag';
+                nameTag.innerText = sender;
+
+                const content = document.createElement('div');
+                content.className = 'message-content';
+
+                row.appendChild(nameTag);
+                row.appendChild(content);
+                chatWindow.appendChild(row);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+
+                return content;
+            }
+
+            function connectBrain() {
+                setInlineStatus("Connecting...", true);
+                ws = new WebSocket(`ws://${SERVER_IP}:${SERVER_PORT}`);
+
+                ws.onopen = () => {
+                    window.ZoMaState.setBrainConnected(true);
+                    setInlineStatus("", false);
+                    chatInput.disabled = false;
+                    chatInput.focus();
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === "identity") {
+			    AI_NAME = data.assistant || AI_NAME;
+                            document.title = `${AI_NAME} Terminal — ZoMa`;
+                        } else if (data.type === "filler") {
+                            setInlineStatus(data.text.replace(/\*/g, '').trim(), true);
+                        } else if (data.type === "stream_start") {
+                            setInlineStatus("", false);
+                            activeStreamContentNode = createMessageBubble(AI_NAME);
+                            activeStreamRawText = "";
+                        } else if (data.type === "stream_chunk") {
+                            if (activeStreamContentNode) {
+                                activeStreamRawText += data.text;
+                                activeStreamContentNode.innerHTML = marked.parse(activeStreamRawText);
+                                chatWindow.scrollTop = chatWindow.scrollHeight;
+                            }
+                        } else if (data.type === "stream_end") {
+                            activeStreamContentNode = null;
+                            chatInput.disabled = false;
+                            chatInput.focus();
+                        }
+                    } catch (err) {
+                        console.error("[BrainWS] Parse error:", err);
+                    }
+                };
+
+                ws.onclose = () => {
+                    window.ZoMaState.setBrainConnected(false);
+                    setInlineStatus("Connection lost. Retrying...", true);
+                    chatInput.disabled = true;
+                    setTimeout(connectBrain, 3000);
+                };
+
+                ws.onerror = () => {
+                    try { ws.close(); } catch(e) {}
+                };
+            }
+
+            chatInput.addEventListener('input', function () {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+
+            chatInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (chatInput.value.trim() !== '' && ws && ws.readyState === WebSocket.OPEN) {
+                        const text = chatInput.value.trim();
+                        createMessageBubble(SPEAKER_NAME).innerText = text;
+
+                        chatInput.value = '';
+                        chatInput.style.height = 'auto';
+                        chatInput.disabled = true;
+
+                        setInlineStatus("Reasoning...", true);
+                        ws.send(JSON.stringify({ type: "text_query", text: text, speaker: SPEAKER_NAME }));
+                    }
+                }
+            });
+
+            connectBrain();
+        })();
+    </script>
+
+    <!-- HUD INDICATORS WEBSOCKET & RENDER PIPELINE -->
+    <script>
+        (() => {
+            // Set this to the same host as the brain chat WebSocket above.
+            const SERVER_IP = "<YOUR_ZOMA_BRAIN_HOST>";
+            const HUD_PORT = 8766;
+            const FONT_STACK = '"DejaVu Sans Mono", Consolas, Menlo, monospace';
+
+            const HUD_TEXT = 'rgba(224,229,235,1)';
+            const HUD_TEXT_DIM = 'rgba(224,229,235,0.667)';
+            const HUD_TEXT_FAINT = 'rgba(224,229,235,0.392)';
+            const HUD_RED = 'rgba(214,80,70,1)';
+            const HUD_BRACKET = 'rgba(224,229,235,0.667)';
+            const HUD_HIGHLIGHT = 'rgba(255,255,255,0.157)';
+            const INWARD_SHIFT_PX = 10;
+            const ROW_GAP = 18;
+
+            let hudState = {
+                wifi: { stale: true, rssi: null, mac: null, iface: null },
+                audio: { mic_active: false, speaker_connected: false },
+            };
+            let hudBridgeConnected = false;
+
+            const missionDay = 1;
+            const navUp = false;
+            const esp32Up = false;
+            const recActive = false;
+            const battFrac = null;
+            const SHOW_REC_BATT = false;
+            const visionFlashText = null;
+            const visionFlashUntil = null;
+
+            const hudStartMs = performance.now();
+            let hudCanvasW = 0, hudCanvasH = 0;
+            let renderScheduled = false;
+
+            function scheduleRender() {
+                if (!renderScheduled) {
+                    renderScheduled = true;
+                    requestAnimationFrame(renderHud);
+                }
+            }
+
+            function fmtHHMMSS(totalSeconds) {
+                totalSeconds = Math.floor(totalSeconds);
+                const h = Math.floor(totalSeconds / 3600);
+                const m = Math.floor((totalSeconds % 3600) / 60);
+                const s = totalSeconds % 60;
+                const pad = (n) => String(n).padStart(2, '0');
+                return `${pad(h)}:${pad(m)}:${pad(s)}`;
+            }
+
+            function localDateTimeStrings() {
+                const now = new Date();
+                const dateStr = new Intl.DateTimeFormat('en-CA', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                }).format(now);
+                const timeStr = new Intl.DateTimeFormat('en-GB', {
+                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+                }).format(now);
+                return { dateStr, timeStr };
+            }
+
+            function signalBars(rssi) {
+                if (rssi >= -50) return 5;
+                if (rssi >= -60) return 4;
+                if (rssi >= -67) return 3;
+                if (rssi >= -75) return 2;
+                if (rssi >= -85) return 1;
+                return 0;
+            }
+
+            function hudFont(px, bold) {
+                return `${bold ? 'bold ' : ''}${px}px ${FONT_STACK}`;
+            }
+
+            function lineHeight(px, ratio = 1.3) {
+                return px * ratio;
+            }
+
+            function textLT(ctx, x, y, text, px, bold, fill, tracking = 0) {
+                ctx.font = hudFont(px, bold);
+                ctx.fillStyle = fill;
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                if (!tracking) {
+                    ctx.fillText(text, x, y);
+                    return x + ctx.measureText(text).width;
+                }
+                let cx = x;
+                for (const ch of text) {
+                    ctx.fillText(ch, cx, y);
+                    cx += ctx.measureText(ch).width + tracking;
+                }
+                return cx;
+            }
+
+            function textRT(ctx, rightX, y, text, px, bold, fill, tracking = 0) {
+                ctx.font = hudFont(px, bold);
+                ctx.fillStyle = fill;
+                ctx.textBaseline = 'top';
+                let totalW = 0;
+                if (!tracking) {
+                    totalW = ctx.measureText(text).width;
+                } else {
+                    for (const ch of text) totalW += ctx.measureText(ch).width + tracking;
+                    totalW -= tracking;
+                }
+                const x = rightX - totalW;
+                ctx.textAlign = 'left';
+                if (!tracking) {
+                    ctx.fillText(text, x, y);
+                } else {
+                    let cx = x;
+                    for (const ch of text) {
+                        ctx.fillText(ch, cx, y);
+                        cx += ctx.measureText(ch).width + tracking;
+                    }
+                }
+                return { x, width: totalW };
+            }
+
+            function drawBars(ctx, x, y, level, h = 13) {
+                const barW = 3, gap = 2;
+                const ratios = [0.35, 0.5, 0.65, 0.8, 1.0];
+                const baseY = y + h;
+                ratios.forEach((r, i) => {
+                    const hh = Math.floor(h * r);
+                    const bx = x + i * (barW + gap);
+                    const by = baseY - hh;
+                    ctx.fillStyle = i < level ? HUD_TEXT : HUD_TEXT_FAINT;
+                    ctx.fillRect(bx, by, barW, hh);
+                });
+                return x + ratios.length * (barW + gap);
+            }
+
+            function iconMic(ctx, cx, cy, size, active) {
+                const s = size / 18.0;
+                ctx.strokeStyle = HUD_TEXT;
+                ctx.lineWidth = Math.max(1, 1.5 * s);
+                ctx.beginPath();
+                ctx.roundRect(cx - 4 * s, cy - 9 * s, 8 * s, 11 * s, 4 * s);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.ellipse(cx, cy + 1.5 * s, 6 * s, 5.5 * s, 0, 20 * Math.PI / 180, 160 * Math.PI / 180);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(cx, cy + 7 * s); ctx.lineTo(cx, cy + 11 * s);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(cx - 4 * s, cy + 11 * s); ctx.lineTo(cx + 4 * s, cy + 11 * s);
+                ctx.stroke();
+                if (!active) {
+                    ctx.lineWidth = Math.max(1, 1.8 * s);
+                    ctx.beginPath();
+                    ctx.moveTo(cx - 8 * s, cy - 10 * s); ctx.lineTo(cx + 8 * s, cy + 11 * s);
+                    ctx.stroke();
+                }
+            }
+
+            function iconSpeaker(ctx, cx, cy, size, connected) {
+                const s = size / 18.0;
+                ctx.strokeStyle = HUD_TEXT;
+                ctx.lineWidth = Math.max(1, 1.5 * s);
+                ctx.strokeRect(cx - 9 * s, cy - 3 * s, 5 * s, 6 * s);
+                ctx.beginPath();
+                ctx.moveTo(cx - 4 * s, cy - 3 * s);
+                ctx.lineTo(cx + 3 * s, cy - 8 * s);
+                ctx.lineTo(cx + 3 * s, cy + 8 * s);
+                ctx.lineTo(cx - 4 * s, cy + 3 * s);
+                ctx.closePath();
+                ctx.stroke();
+                if (connected) {
+                    ctx.beginPath();
+                    ctx.ellipse(cx + 7.5 * s, cy, 3.5 * s, 7 * s, 0, -50 * Math.PI / 180, 50 * Math.PI / 180);
+                    ctx.stroke();
+                    ctx.lineWidth = Math.max(1, 1.2 * s);
+                    ctx.beginPath();
+                    ctx.ellipse(cx + 10.5 * s, cy, 4.5 * s, 10 * s, 0, -50 * Math.PI / 180, 50 * Math.PI / 180);
+                    ctx.stroke();
+                } else {
+                    ctx.lineWidth = Math.max(1, 1.8 * s);
+                    ctx.beginPath();
+                    ctx.moveTo(cx - 11 * s, cy - 9 * s); ctx.lineTo(cx + 11 * s, cy + 9 * s);
+                    ctx.stroke();
+                }
+            }
+
+            function iconBattery(ctx, rightX, y, levelFrac) {
+                const bw = 24, bh = 12;
+                const x0 = rightX - bw;
+                ctx.strokeStyle = HUD_TEXT;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.roundRect(x0, y, bw, bh, 2);
+                ctx.stroke();
+                ctx.fillStyle = HUD_TEXT;
+                ctx.fillRect(rightX + 1, y + 4, 2, bh - 8);
+                if (levelFrac !== null && levelFrac !== undefined) {
+                    const fillW = Math.floor((bw - 4) * levelFrac);
+                    ctx.fillRect(x0 + 2, y + 2, fillW, bh - 4);
+                }
+                return x0;
+            }
+
+            function statusDot(ctx, cx, cy, r, present, color) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+                if (present) {
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                } else {
+                    ctx.strokeStyle = HUD_TEXT;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+
+            function setupHudCanvasSizing() {
+                const canvas = document.getElementById('hud-canvas');
+                if (!canvas || !window.ResizeObserver) return;
+                const ro = new ResizeObserver((entries) => {
+                    for (const entry of entries) {
+                        const cw = Math.round(entry.contentRect.width);
+                        const ch = Math.round(entry.contentRect.height);
+                        if (cw === hudCanvasW && ch === hudCanvasH) continue;
+                        hudCanvasW = cw;
+                        hudCanvasH = ch;
+                        const dpr = window.devicePixelRatio || 1;
+                        canvas.width = Math.round(cw * dpr);
+                        canvas.height = Math.round(ch * dpr);
+                        scheduleRender();
+                    }
+                });
+                ro.observe(canvas);
+            }
+
+            function renderHud() {
+                renderScheduled = false;
+                const canvas = document.getElementById('hud-canvas');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const dpr = window.devicePixelRatio || 1;
+                const w = hudCanvasW, h = hudCanvasH;
+                if (w === 0 || h === 0) return;
+
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                ctx.clearRect(0, 0, w, h);
+
+                const LEFT_X = 26 + INWARD_SHIFT_PX;
+                const RIGHT_X = w - 26 - INWARD_SHIFT_PX;
+                const TOP_MARGIN = 53;
+
+                // ---------------- LEFT COLUMN ----------------
+                let y = TOP_MARGIN;
+                textLT(ctx, LEFT_X, y, "MISSION DAY", 11, false, HUD_TEXT_DIM, 2);
+                y += lineHeight(11, 1.2) + 4;
+
+                const heroVal = `DAY ${missionDay}`;
+                ctx.font = hudFont(18, true);
+                const heroW = ctx.measureText(heroVal).width;
+                const hlPadX = 8, hlPadY = 4;
+                const heroLH = lineHeight(18, 1.0);
+                ctx.fillStyle = HUD_HIGHLIGHT;
+                ctx.fillRect(LEFT_X - hlPadX, y - hlPadY, heroW + hlPadX * 2, heroLH + hlPadY * 2);
+                textLT(ctx, LEFT_X, y, heroVal, 18, true, HUD_TEXT, 0);
+                y += lineHeight(18, 1.15) + ROW_GAP - 4;
+
+                const sessionStr = fmtHHMMSS((performance.now() - hudStartMs) / 1000);
+                textLT(ctx, LEFT_X, y, `SESSION  ${sessionStr}`, 13, false, HUD_TEXT_DIM, 1);
+                y += lineHeight(13, 1.2) + ROW_GAP;
+
+                const brainUp = window.ZoMaState.brainConnected;
+                const r = 5;
+                for (const [label, present] of [['BRAIN', brainUp], ['NAV2', navUp], ['ESP32 LINK', esp32Up]]) {
+                    statusDot(ctx, LEFT_X + r, y + 7, r, present, HUD_TEXT);
+                    textLT(ctx, LEFT_X + r * 2 + 8, y, label, 13, false, present ? HUD_TEXT_DIM : HUD_TEXT_FAINT, 0);
+                    y += lineHeight(13, 1.3) + (ROW_GAP - 8);
+                }
+
+                const termY = h - 74;
+                const tx = textLT(ctx, LEFT_X, termY, "ZOMA", 34, true, HUD_TEXT, 2);
+                textLT(ctx, tx + 14, termY, "TERMINAL", 34, false, HUD_TEXT_DIM, 2);
+
+                // ---------------- RIGHT COLUMN ----------------
+                y = TOP_MARGIN;
+                const { dateStr, timeStr } = localDateTimeStrings();
+                textRT(ctx, RIGHT_X, y, `${dateStr}   ${timeStr}`, 11, false, HUD_TEXT_DIM, 2);
+                y += lineHeight(11, 1.15) + ROW_GAP;
+
+                const wifi = hudState.wifi || {};
+                const padX = 8, padY = 5;
+                const boxH = lineHeight(15, 1.0);
+
+                if (hudBridgeConnected && !wifi.stale && wifi.rssi !== null && wifi.rssi !== undefined) {
+                    const level = signalBars(wifi.rssi);
+                    const val = `${wifi.rssi} dBm`;
+                    ctx.font = hudFont(15, true);
+                    const valW = ctx.measureText(val).width;
+                    const barsW = 5 * (3 + 2);
+                    const innerW = barsW + 6 + valW;
+                    const bx1 = RIGHT_X, bx0 = RIGHT_X - innerW - padX * 2;
+                    const by0 = y, by1 = y + boxH + padY * 2;
+                    ctx.strokeStyle = HUD_TEXT;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(bx0, by0, bx1 - bx0, by1 - by0);
+                    const barsX0 = bx0 + padX;
+                    const barTop = by0 + padY + (boxH - 13) / 2;
+                    const afterBarsX = drawBars(ctx, barsX0, barTop, level, 13);
+                    textLT(ctx, afterBarsX + 6, by0 + padY - 1, val, 15, true, HUD_TEXT, 0);
+                } else if (hudBridgeConnected) {
+                    const msg = "RECONNECTING...";
+                    ctx.font = hudFont(15, true);
+                    const msgW = ctx.measureText(msg).width;
+                    const bx1 = RIGHT_X, bx0 = RIGHT_X - msgW - padX * 2;
+                    const by0 = y, by1 = y + boxH + padY * 2;
+                    ctx.strokeStyle = HUD_TEXT;
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(bx0, by0, bx1 - bx0, by1 - by0);
+                    textLT(ctx, bx0 + padX, by0 + padY - 1, msg, 15, true, HUD_TEXT, 0);
+                }
+                y += boxH + padY * 2 + ROW_GAP;
+
+                const audio = hudState.audio || {};
+                const iconSize = 15;
+                const icY = y + 7;
+                if (hudBridgeConnected) {
+                    iconSpeaker(ctx, RIGHT_X - iconSize / 2, icY, iconSize, audio.speaker_connected);
+                    const spX = RIGHT_X - iconSize - 18;
+                    iconMic(ctx, spX - iconSize / 2, icY, iconSize, audio.mic_active);
+                }
+                y += iconSize + ROW_GAP;
+
+                if (SHOW_REC_BATT) {
+                    statusDot(ctx, RIGHT_X - r, y + 6, r, recActive, recActive ? HUD_RED : HUD_TEXT);
+                    ctx.font = hudFont(11, false);
+                    const recW = ctx.measureText("REC").width;
+                    textLT(ctx, RIGHT_X - r * 2 - 8 - recW, y, "REC", 11, false, HUD_TEXT_DIM, 0);
+                    y += lineHeight(11, 1.3) + ROW_GAP;
+
+                    ctx.font = hudFont(11, false);
+                    const battW = ctx.measureText("BATT").width;
+                    const iconX0 = iconBattery(ctx, RIGHT_X, y + 1, battFrac);
+                    textLT(ctx, iconX0 - 8 - battW, y, "BATT", 11, false, HUD_TEXT_FAINT, 0);
+                }
+
+                // ---------------- ephemeral VISION flash ----------------
+                if (visionFlashText && visionFlashUntil && performance.now() < visionFlashUntil) {
+                    const vfY = h - 40;
+                    textRT(ctx, RIGHT_X, vfY, `VISION · ${visionFlashText}`, 11, false, HUD_TEXT_DIM, 1);
+                }
+
+                // ---------------- frame bracket lines ----------------
+                const bracketLeftX = 14 + INWARD_SHIFT_PX;
+                const bracketRightX = w - 14 - INWARD_SHIFT_PX;
+                const bracketTop = TOP_MARGIN + 12 - 15;
+                ctx.strokeStyle = HUD_BRACKET;
+                ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(bracketLeftX, bracketTop); ctx.lineTo(bracketLeftX, h - 30); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(bracketRightX, bracketTop); ctx.lineTo(bracketRightX, h - 30); ctx.stroke();
+            }
+
+            let hudWs = null;
+            let hudReconnectTimer = null;
+
+            function connectHud() {
+                if (hudWs && (hudWs.readyState === WebSocket.CONNECTING || hudWs.readyState === WebSocket.OPEN)) {
+                    return;
+                }
+                if (hudReconnectTimer) {
+                    clearTimeout(hudReconnectTimer);
+                    hudReconnectTimer = null;
+                }
+
+                hudWs = new WebSocket(`ws://${SERVER_IP}:${HUD_PORT}`);
+
+                hudWs.onopen = () => {
+                    hudBridgeConnected = true;
+                    scheduleRender();
+                };
+
+                hudWs.onmessage = (evt) => {
+                    try {
+                        hudState = JSON.parse(evt.data);
+                        scheduleRender();
+                    } catch (e) {
+                        // ignore malformed frame
+                    }
+                };
+
+                hudWs.onclose = () => {
+                    hudBridgeConnected = false;
+                    scheduleRender();
+                    hudReconnectTimer = setTimeout(connectHud, 3000);
+                };
+
+                hudWs.onerror = () => {
+                    try { hudWs.close(); } catch(e) {}
+                };
+            }
+
+            window.ZoMaState.onBrainStatusChange(() => scheduleRender());
+
+            setupHudCanvasSizing();
+            connectHud();
+            setInterval(scheduleRender, 1000);
+        })();
+    </script>
+</body>
+</html>

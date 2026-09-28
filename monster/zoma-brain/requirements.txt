@@ -1,0 +1,32 @@
+# ZoMa Brain -- Python dependencies for the off-board backend.
+# Property of TheMechanics. Contact: mamau.mechanics@gmail.com
+
+# Core server
+websockets
+aiohttp
+
+# Claude API (uplink sessions)
+anthropic
+
+# Speech-to-text
+faster-whisper
+
+# Speaker identification
+torch
+torchaudio
+pyannote.audio
+
+# Memory (FAISS + embeddings)
+faiss-cpu
+sentence-transformers
+
+# Vision (Tier 0 ingestion; add ultralytics later for Tier 1 YOLO)
+opencv-python
+
+# Live data tools
+yfinance
+requests
+ddgs
+
+# Document ingestion (optional utility scripts)
+pdfplumber
