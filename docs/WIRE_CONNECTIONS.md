@@ -173,6 +173,11 @@ GPIO32 was chosen because it's not a strapping pin, not UART0, and not input-onl
 
 ## RPLIDAR C1 ↔ Raspberry Pi 4 / UBEC 5V
 
+*Planned wiring for the lidar unit — part of the Season 2 autonomous navigation
+work (see [ARCHITECTURE.md](ARCHITECTURE.md#4-planned--autonomous-navigation-season-2)),
+not installed in this build. The UBEC power branch is already wired; the lidar
+unit itself is not.*
+
 - **Interface:** Pi 4 hardware primary UART (`/dev/ttyAMA0` or `/dev/serial0`)
 - **Logic Level:** 3.3V TTL compatible
 - **Power Source:** Dedicated 5V UBEC (direct parallel connection)

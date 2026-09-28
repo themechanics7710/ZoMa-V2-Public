@@ -1,8 +1,9 @@
 # ZoMa — Architecture
 
 ZoMa is a differential-drive apartment robot with an onboard AI system — **ZoMa
-Brain** — built for autonomous indoor navigation (SLAM + Nav2) and natural voice
-interaction. The chassis is hand-built from raw acrylic, no laser cutter or CNC.
+Brain** — for natural voice interaction, with autonomous indoor navigation
+(SLAM + Nav2) designed into the platform for a second build season (see §4).
+The chassis is hand-built from raw acrylic, no laser cutter or CNC.
 
 This document covers the physical and electrical architecture: chassis layout,
 power system, sensors, compute, and the two onboard microcontrollers. For pin-level
@@ -24,7 +25,8 @@ flash each component, see [SETUP.md](SETUP.md).
 - **Rear wheels**: differential-drive pair, JGB37-520 DC 6V encoder motors, 200 RPM,
   6 mm D-shaft, with mounting brackets.
 - **Camera mast**: vertical acrylic tower on the top deck, holding the front-facing
-  camera at height for a clear field of view.
+  camera at height for a clear field of view. Two slots at the rear of the mast are
+  reserved for a lidar unit (see §4 — not installed in this build).
 
 ## 2. Electrical architecture
 
@@ -90,15 +92,8 @@ RX ships two PlatformIO build environments from the same firmware source:
 Any RX firmware change is proven on `debug_bench` before being run under
 `deploy_ros`.
 
-## 3. Software / navigation stack
+## 3. Software stack
 
-- **SLAM**: lidar-only ICP (RTAB-Map), `Reg/Strategy:=1` (ICP),
-  `Reg/Force3DoF:=true`, `approx_sync:=true` for independently-clocked `/scan` and
-  `/odometry/filtered`.
-- **Nav2** on top of the SLAM map for autonomous path planning.
-- **EKF** (`robot_localization`): wheel encoders provide odometry, IMU yaw is fed
-  directly via `imu0_config` — encoders and IMU each report only what they
-  physically measure, fused in the EKF rather than combined in firmware.
 - **ZoMa Brain**: tiered inference —
   - Tier 0: reflex / canned responses, near-instant.
   - Tier 1: small local model, fast first-token response.
@@ -107,17 +102,28 @@ Any RX firmware change is proven on `debug_bench` before being run under
   - Voice pipeline: TTS output with barge-in interrupt; STT/mic input for
     fully hands-free conversation.
 
-## 4. Repository structure
+## 4. Planned — autonomous navigation (Season 2)
+
+Lidar-based SLAM (RTAB-Map, lidar-only ICP), Nav2 path planning on top of the
+SLAM map, and an EKF (`robot_localization`) fusing wheel-encoder odometry with
+IMU yaw are designed into the platform — the chassis reserves mast slots for a
+lidar (§1) and the mechanical/power headroom for the sensors it needs — but are
+not implemented in this build. They're planned for a second build season,
+running as ROS 2 nodes on the Raspberry Pi and Monster. See
+[`docs/EQUIPMENT.md`](EQUIPMENT.md) for what's confirmed vs. planned by build
+day.
+
+## 5. Repository structure
 
 ```
 ZoMa-V2-Public/
-├── docs/               # this file, WIRE_CONNECTIONS.md, SETUP.md, STARTUP_GUIDE.md
+├── docs/               # this file, WIRE_CONNECTIONS.md, SETUP.md, STARTUP_GUIDE.md, EQUIPMENT.md
 ├── esp32_tx/           # PS5 pairing + ESP-NOW to RX
 ├── esp32_rx/           # motors, IMU, encoders, micro-ROS client, e-stop
-├── pi/                 # camera capture, micro-ROS agent, ROS publishers, lidar driver
-├── monster/            # SLAM, Nav2, EKF, camera pipeline, ZoMa Brain (off-board GPU machine)
+├── pi/                 # camera capture, micro-ROS agent, ZoMa Brain audio/LED clients
+├── monster/            # camera pipeline, ZoMa Brain (off-board GPU machine)
 ├── web/                # dashboard / web UI
-└── mechanical/         # CAD / cut files for the acrylic chassis
+└── mechanical/         # CAD/cut files for the chassis, and 3D-printable design files
 ```
 
 ---

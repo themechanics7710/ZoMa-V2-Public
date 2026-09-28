@@ -12,8 +12,6 @@ software, the AI backend, the web dashboard, and the mechanical design files.
 
 ## What ZoMa does
 
-- **Drives itself around** using a lidar-based SLAM map (RTAB-Map) and Nav2 for
-  path planning, fusing wheel-encoder odometry with IMU heading through an EKF.
 - **Sees and hears** through an onboard camera and a far-field microphone array,
   streamed to an off-board GPU machine for real-time processing.
 - **Talks back** with a voice pipeline (speech-to-text → LLM → text-to-speech)
@@ -27,14 +25,17 @@ software, the AI backend, the web dashboard, and the mechanical design files.
   ESP32 transmitter, relayed to the robot over a low-latency ESP-NOW link.
 
 It's built with room to grow: the chassis reserves space and power for a second
-battery and a robotic arm, without needing a redesign.
+battery and a robotic arm, without needing a redesign. Autonomous navigation
+(lidar-based SLAM + Nav2 path planning, over ROS 2) is planned for a second
+build season and isn't implemented yet — see
+[docs/EQUIPMENT.md](docs/EQUIPMENT.md).
 
 ## How the robot is put together
 
 At a glance: two ESP32 microcontrollers handle real-time control (driving the
 motors, reading the encoders and IMU, receiving the controller input), a
-Raspberry Pi 4 handles onboard I/O (camera, microphone array, lidar, and talking
-to the ESP32s over micro-ROS), and an off-board machine with a GPU does the heavy
+Raspberry Pi 4 handles onboard I/O (camera, microphone array, and talking to the
+ESP32s over micro-ROS), and an off-board machine with a GPU does the heavy
 lifting for AI (speech recognition, the language model, vision, and text-to-speech).
 A browser-based dashboard ties the camera feed and a chat interface together.
 
@@ -43,12 +44,13 @@ Controller (PS5) ─▶ ESP32 TX ─ESP-NOW─▶ ESP32 RX ─▶ motors / encod
                                              │
                                         micro-ROS (USB serial)
                                              │
-                                       Raspberry Pi 4 ── camera / mic / lidar
+                                       Raspberry Pi 4 ── camera / mic array
                                              │
                                       (network / web dashboard)
                                              │
                                   Off-board GPU machine ("Monster")
-                                  SLAM · Nav2 · ZoMa Brain (LLM/TTS/STT)
+                                    ZoMa Brain (LLM/TTS/STT)
+                              (SLAM · Nav2 planned — Season 2)
 ```
 
 ## Repository layout
@@ -61,7 +63,7 @@ Controller (PS5) ─▶ ESP32 TX ─ESP-NOW─▶ ESP32 RX ─▶ motors / encod
 | [`pi/`](pi/) | Raspberry Pi–side scripts: audio streaming, the LED status ring client, mic-array control |
 | [`monster/`](monster/) | The off-board AI backend — ZoMa Brain: speech recognition, the LLM engine, vision, memory, and text-to-speech |
 | [`web/`](web/) | The browser dashboard: live camera feed with a HUD overlay, and a chat interface into ZoMa Brain |
-| [`mechanical/`](mechanical/) | CAD and cut files for the acrylic chassis |
+| [`mechanical/`](mechanical/) | CAD/cut files for the acrylic chassis, and [3D-printable design files](mechanical/3d_design/) for printed parts |
 
 ## Where to start
 
@@ -74,9 +76,18 @@ Controller (PS5) ─▶ ESP32 TX ─ESP-NOW─▶ ESP32 RX ─▶ motors / encod
    your own copy.
 4. **[docs/STARTUP_GUIDE.md](docs/STARTUP_GUIDE.md)** — how to actually launch
    the ZoMa Brain server and its dependencies, with the full CLI reference.
+5. **[docs/EQUIPMENT.md](docs/EQUIPMENT.md)** — the full parts and tools list,
+   organized by build day, so you know exactly what to have on hand before you
+   start.
 
-If you're new to the project, reading those four in order will take you from "what
+If you're new to the project, reading those in order will take you from "what
 is this robot" to "I have it running."
+
+ZoMa is being built and documented as a 20-day build, released as a video
+series. Days 1–8 (chassis, drive base, power, and the RX/TX firmware link) are
+complete; Days 9–20 (sensors, the onboard computer, and ZoMa Brain) are in
+progress. ROS 2 and Nav2 — autonomous SLAM navigation — are planned for a
+second season and aren't part of this build.
 
 ---
 

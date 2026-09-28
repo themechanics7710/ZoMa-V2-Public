@@ -10,13 +10,13 @@ chassis.
 
 ```
 ZoMa-V2-Public/
-├── docs/            # ARCHITECTURE.md, WIRE_CONNECTIONS.md, SETUP.md (this file), STARTUP_GUIDE.md
+├── docs/            # ARCHITECTURE.md, WIRE_CONNECTIONS.md, SETUP.md (this file), STARTUP_GUIDE.md, EQUIPMENT.md
 ├── esp32_tx/        # PS5 pairing + ESP-NOW to RX
 ├── esp32_rx/        # motors, IMU, encoders, micro-ROS client, e-stop
-├── pi/              # camera capture, micro-ROS agent, ROS publishers, lidar driver
-├── monster/         # SLAM, Nav2, EKF, camera pipeline, ZoMa Brain (off-board GPU machine)
+├── pi/              # camera capture, micro-ROS agent, ZoMa Brain audio/LED clients
+├── monster/         # camera pipeline, ZoMa Brain (off-board GPU machine)
 ├── web/             # dashboard / web UI
-└── mechanical/      # CAD / cut files for the acrylic chassis
+└── mechanical/      # CAD/cut files for the chassis, and 3D-printable design files
 ```
 
 Clone the full repository even if you're only working on one component — the docs
@@ -50,18 +50,22 @@ committed — see each component's section below for how they're supplied instea
 
 ## 3. Onboard software (Raspberry Pi)
 
-- ROS 2 Humble, run in Docker.
+- ROS 2 Humble, run in Docker — runs the micro-ROS agent that bridges the RX
+  board's `deploy_ros` firmware to the rest of the system.
 - Boot automation: a systemd service launches the onboard stack (micro-ROS agent,
-  EKF, IMU TF, lidar driver, audio/LED host processes) into a tmux session, so it's
-  inspectable and restartable without re-running everything by hand.
+  audio/LED host processes) into a tmux session, so it's inspectable and
+  restartable without re-running everything by hand.
 - The scripts in `pi/scripts/` reference the repo's install location on the Pi
   through a variable near the top of each script — set that to wherever you clone
   this repo on your own Pi.
+- EKF, a lidar driver, and Nav2 are part of the planned Season 2 autonomous
+  navigation stack — not part of this build. See
+  [ARCHITECTURE.md](ARCHITECTURE.md#4-planned--autonomous-navigation-season-2).
 
-## 4. Off-board GPU machine — `monster/` (SLAM / Nav2 / ZoMa Brain)
+## 4. Off-board GPU machine — `monster/` (ZoMa Brain)
 
-- Runs SLAM (RTAB-Map, lidar-only ICP), Nav2, EKF, the camera pipeline, and ZoMa
-  Brain (local LLM + vision-language model serving, TTS/STT).
+- Runs the camera pipeline and ZoMa Brain (local LLM + vision-language model
+  serving, TTS/STT).
 - GPU passthrough (`--gpus all`) is required for any container touching the GPU.
 - If running under WSL2: GStreamer pipelines relying on wall-clock timestamps can
   break due to WSL2 clock stepping — use a no-clock pipeline pattern
@@ -74,7 +78,8 @@ committed — see each component's section below for how they're supplied instea
 
 - 3 mm acrylic, 30×30 cm two-deck chassis with a vertical camera mast, hand-cut
   with a ruler and blade (no laser, no CNC).
-- CAD/cut templates live in `mechanical/`.
+- CAD/cut templates and 3D-printable design files live in `mechanical/` (see
+  [`mechanical/3d_design/`](../mechanical/3d_design/) for printed parts).
 - Battery placement (centered, bottom deck), the reserved second-battery
   footprint, and IMU isolation are mechanical constraints — factor them into any
   cut-layout changes, not just the electrical wiring. See
@@ -83,10 +88,12 @@ committed — see each component's section below for how they're supplied instea
 ## 6. Before you build
 
 1. Read [ARCHITECTURE.md](ARCHITECTURE.md) and [WIRE_CONNECTIONS.md](WIRE_CONNECTIONS.md).
-2. Build and prove each module in isolation (`debug_bench` for firmware, or the
+2. Check [EQUIPMENT.md](EQUIPMENT.md) for the parts and tools needed, organized
+   by build day.
+3. Build and prove each module in isolation (`debug_bench` for firmware, or the
    equivalent bench setup for other components) before integrating it into the
    full, deployed system.
-3. Confirm physical assumptions (encoder counts-per-revolution, pin behavior,
+4. Confirm physical assumptions (encoder counts-per-revolution, pin behavior,
    wiring) against your own hardware rather than trusting a datasheet alone — real
    builds vary.
 
