@@ -8,8 +8,8 @@ days, so follow the day headings here rather than episode numbers.
 The reasoning behind most choices lives in [`ARCHITECTURE.md`](ARCHITECTURE.md)
 and [`WIRE_CONNECTIONS.md`](WIRE_CONNECTIONS.md).
 
-3D-printable design files (the TX case, chassis edge profiles, brackets, and
-mast cap referenced below) live in
+3D-printable design files for every 3D-printed part below (mast base, pillars,
+standoffs, bumpers, edge profiles, mast cap, brackets, and the TX case) live in
 [`mechanical/3d_design/`](../mechanical/3d_design/).
 
 💡 marks an engineering note worth reading before you buy or wire.
@@ -27,7 +27,7 @@ mast cap referenced below) live in
 | Coping saw | Day 1 | Rounded corners |
 | Drill + bits | Day 1 | Mounting holes, battery case, switch, pillars |
 | Wet/dry sandpaper, multiple grits | Day 1 | Mast edges |
-| 3D printer | Day 1 | Edge profiles, caps, brackets, transmitter case |
+| 3D printer | Day 1 | Edge profiles, caps, pillars, standoffs, bumpers, brackets, transmitter case |
 | Screwdrivers (incl. small precision) | Day 1 | Assembly, buck-converter trimpots |
 | Tweezers | Day 2 | Holding nuts in tight spots |
 | Bubble level | Day 2 | Two-axis level check of the drive base |
@@ -54,13 +54,13 @@ mast cap referenced below) live in
 | Black acrylic sheet | 1 | 3 mm, 30×30 cm finished — bottom / drive deck |
 | Clear acrylic sheet | 1 | 3 mm, 30×30 cm finished — top / compute deck |
 | Clear acrylic panels | 4 | Rectangular, form the camera mast |
-| Mast base | 1 | Joins mast to top deck |
-| Pillars | 6 | Join the decks; screwed to top, glued to bottom after wiring |
-| Standoffs | — | Bottom deck |
+| 3D-printed mast base | 1 | Joins mast to top deck |
+| 3D-printed pillars | 6 | Join the decks; screwed to top, glued to bottom after wiring |
+| 3D-printed standoffs | — | Bottom deck |
 | Screws / nuts | — | Deck and mast assembly |
-| 3D-printed edge profiles | — | Clean up every hand-cut edge — design files in [`mechanical/3d_design/`](../mechanical/3d_design/) |
+| 3D-printed edge profiles | — | Clean up every hand-cut edge |
 | 3D-printed mast cap | 1 | Top of mast; camera bracket mounts here later |
-| Front + rear bumpers | 2 | Protection + a second structural link between decks |
+| 3D-printed front + rear bumpers | 2 | Protection + a second structural link between decks |
 | Foam | — | Under-deck battery bay padding |
 
 **Consumables**
@@ -125,9 +125,9 @@ Minimum **5 cm** clearance between the bottom deck and the floor — enough to c
 | Electrolytic capacitors | — | 470 µF, 16 V+ (most branches) |
 | Electrolytic capacitor | 1 | 1000 µF, 16 V+ (motor branch) |
 | Perfboard standoffs | — | |
-| LM2596 buck converter | 2 | #1 motor branch, #2 ESP32 branch |
+| LM2596 buck converter | 2 | #1 motor rail, #2 ESP32 rail |
 | Buck converter for Raspberry Pi 4 | 1 | Must supply 5.1 V at ≥3 A |
-| UBEC | 1 | Lidar branch — installed now, lidar itself is Season 2 |
+| UBEC | 1 | Dedicated 5V UBEC, lidar branch — installed now, lidar itself is Season 2 |
 | Hookup wire, red/black + branch colors | — | Gauge and per-branch color coding to suit your build |
 | Bare jumper wire | — | Perfboard rails (6 pairs) |
 
@@ -207,12 +207,12 @@ Minimum **5 cm** clearance between the bottom deck and the floor — enough to c
 | Item | Qty | Spec |
 |---|---|---|
 | PlayStation 5 DualSense controller | 1 | Bluetooth |
-| ESP32 board with U.FL antenna connector (transmitter / "TX") | 1 | USB-C, original ESP32 (Bluetooth Classic + ESP-NOW) |
-| External antenna + U.FL pigtail | 1 | Brass bulkhead connector through rear panel |
-| Addressable RGB LED ring | 1 | 12 LEDs, 3-wire (5 V / GND / data) — link status |
-| Resistor, inline on the LED data line | 1 | Reduces signal ringing |
-| TP4056 charger module | 1 | USB-C |
-| LiPo pouch battery | 1 | 1S, 3.7 V |
+| ESP32 DevKit (transmitter / "TX") | 1 | Micro-USB, original ESP32 (Bluetooth Classic + ESP-NOW), external IPEX/U.FL antenna connector |
+| External antenna + IPEX/U.FL pigtail | 1 | Brass bulkhead connector through rear panel |
+| WS2812B addressable RGB LED ring | 1 | 5 V, 12 LEDs, 16 mm diameter, 3-wire (5V/GND/data) — link status |
+| Resistor, inline on the LED data line | 1 | 220 Ω — reduces signal ringing |
+| TP4056 charger module | 1 | Type-C USB, 5 V 1 A, dual protection |
+| LiPo pouch battery | 1 | 3.7 V, 1000 mAh, 603048 form factor, 2-wire |
 | Boost converter | 1 | 3.7 V → 5 V |
 | Rocker switch | 1 | Master cutoff |
 | Double-sided adhesive strip | — | Under the ESP32 |
@@ -285,8 +285,8 @@ Software only otherwise — video streaming, and the local LLM/vision-language m
 
 | Item | Qty | Spec |
 |---|---|---|
-| USB speaker | 1 | Direct to Pi 4 |
-| Microphone array | 1 | Onboard |
+| Seeed Studio Mono Enclosed Speaker | 1 | 4Ω 5W (SKU 114993346), direct to Pi 4 |
+| Seeed Studio ReSpeaker USB mic array | 1 | XMOS XVF3800 DSP, onboard |
 
 ---
 
@@ -295,8 +295,8 @@ Software only otherwise — video streaming, and the local LLM/vision-language m
 | Item | Qty | Spec |
 |---|---|---|
 | ZoMa Brain LED ring | 1 | SparkFun LuMini 2" ring, 40× APA102 LEDs, driven from the Pi's hardware SPI — shows listening / thinking / speaking |
-| Bulk capacitor at the ring's power pads | 1 | 470–1000 µF |
-| 5 V supply branch for the ring | 1 | Separate from the Pi's supply |
+| Bulk capacitor at the ring's power pads | 1 | 470 µF |
+| 5 V 5A buck converter for the ring | 1 | Separate from the Pi's own supply |
 | 3D-printed ring bracket | 1 | 5–8 mm lip for an optional diffuser |
 
 💡 **Why APA102 instead of WS2812 on the Pi.** WS2812 LEDs need a single data line with microsecond-exact timing, which a Linux computer can't guarantee while it's busy with other work. APA102 uses a separate clock line (SPI), so small timing hiccups don't corrupt the colors. It also dims smoothly and flickers less on camera.
@@ -310,7 +310,7 @@ Software only otherwise — video streaming, and the local LLM/vision-language m
 | Item | Notes |
 |---|---|
 | ROS 2 + Nav2 (autonomous navigation) | Full SLAM/Nav2 stack — lidar-only ICP mapping and path planning. This build's Pi and server software stops at streaming, voice, and conversational AI |
-| Lidar | Required for the planned lidar-only SLAM. UBEC branch installed on Day 3; mast slots cut on Day 1 |
+| RPLIDAR C1 | Required for the planned lidar-only SLAM. UBEC branch installed on Day 3; mast slots cut on Day 1 |
 | New mast with arm | Replaces the current mast |
 | 16-channel PWM servo driver board | For the arm; deck space and a dedicated power branch are already reserved |
 | Second battery | Same footprint as the first; deck space already reserved |
