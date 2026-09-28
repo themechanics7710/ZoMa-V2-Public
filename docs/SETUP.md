@@ -52,20 +52,28 @@ committed — see each component's section below for how they're supplied instea
 
 - ROS 2 Humble, run in Docker — runs the micro-ROS agent that bridges the RX
   board's `deploy_ros` firmware to the rest of the system.
+- [MediaMTX](https://github.com/bluenviron/mediamtx) serves the Pi camera as
+  both RTSP (for ZoMa Brain's vision pipeline) and WebRTC (for the web
+  dashboard) — not part of this repo, installed and configured directly on
+  the Pi. See [STARTUP_GUIDE.md](STARTUP_GUIDE.md#11-camera-stream-mediamtx).
 - Boot automation: a systemd service launches the onboard stack (micro-ROS agent,
-  audio/LED host processes) into a tmux session, so it's inspectable and
-  restartable without re-running everything by hand.
+  MediaMTX, audio/LED host processes) into a tmux session, so it's inspectable
+  and restartable without re-running everything by hand.
 - The scripts in `pi/scripts/` reference the repo's install location on the Pi
   through a variable near the top of each script — set that to wherever you clone
-  this repo on your own Pi.
+  this repo on your own Pi. See [STARTUP_GUIDE.md](STARTUP_GUIDE.md#12-audio-mic-and-led-status-scripts)
+  for how to start them.
 - EKF, a lidar driver, and Nav2 are part of the planned Season 2 autonomous
   navigation stack — not part of this build. See
   [ARCHITECTURE.md](ARCHITECTURE.md#4-planned--autonomous-navigation-season-2).
 
 ## 4. Off-board GPU machine — `monster/` (ZoMa Brain)
 
-- Runs the camera pipeline and ZoMa Brain (local LLM + vision-language model
-  serving, TTS/STT).
+- Runs ZoMa Brain (local LLM + vision-language model serving, STT), decoding
+  the Pi's RTSP camera stream rather than capturing video itself.
+- Kokoro TTS runs as a separate Docker service Monster talks to over HTTP —
+  see [STARTUP_GUIDE.md](STARTUP_GUIDE.md#21-kokoro-tts-service) for the API
+  contract and how to stand it up.
 - GPU passthrough (`--gpus all`) is required for any container touching the GPU.
 - If running under WSL2: GStreamer pipelines relying on wall-clock timestamps can
   break due to WSL2 clock stepping — use a no-clock pipeline pattern
