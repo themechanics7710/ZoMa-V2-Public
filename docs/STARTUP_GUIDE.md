@@ -179,13 +179,47 @@ docker run -d --name kokoro-service \
   kokoro-service
 ```
 
-### 2.2 ZoMa Brain server
+### 2.2 Ollama + Qwen models
+
+ZoMa Brain's local (Tier 1) inference and its vision-language analysis run
+through [Ollama](https://ollama.com), talked to over plain HTTP — not a pip
+package, so it isn't in `requirements.txt`. Install it and pull the two
+models ZoMa Brain expects by default:
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+
+ollama pull qwen3:14b        # text model (config.QWEN_TEXT_MODEL)
+ollama pull qwen2.5vl:7b     # vision-language model (config.QWEN_VL_MODEL)
+```
+
+Ollama starts its own local API server automatically on
+`http://localhost:11434`. Override either model via the `QWEN_TEXT_MODEL` /
+`QWEN_VL_MODEL` environment variables if you'd rather run different model
+sizes for your GPU.
+
+### 2.3 ZoMa Brain server
+
+**Install the Python dependencies:**
+
+```bash
+cd monster/zoma-brain/
+pip install -r requirements.txt
+```
+
+`torch`/`torchaudio` pull in a CPU-only build by default on some platforms —
+if `torch.cuda.is_available()` comes back `False` after installing, reinstall
+from PyTorch's CUDA index instead, e.g.:
+
+```bash
+pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu121
+```
 
 **Prerequisites:**
 
 - **NVIDIA CUDA GPU available** — Whisper initializes with `device="cuda"` by
   default; a functional CUDA GPU is required.
-- **Ollama running** locally (`http://localhost:11434/api/chat`).
+- **Ollama running**, with the Qwen models pulled — see §2.2 above.
 - **Kokoro TTS running** — verify with `curl http://127.0.0.1:8770/health`
   (see §2.1 above).
 - **The Pi's camera stream running** — see §1.1 above.

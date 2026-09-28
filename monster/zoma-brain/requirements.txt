@@ -11,10 +11,15 @@ anthropic
 # Speech-to-text
 faster-whisper
 
+# Numeric backbone (used directly for audio resampling, not just a
+# transitive dependency of torch/opencv/faiss)
+numpy
+
 # Speaker identification
 torch
 torchaudio
 pyannote.audio
+huggingface_hub
 
 # Memory (FAISS + embeddings)
 faiss-cpu

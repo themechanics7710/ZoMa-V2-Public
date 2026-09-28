@@ -1,0 +1,12 @@
+# ZoMa Pi audio/LED -- Python dependencies for the host-side scripts.
+# Property of TheMechanics. Contact: mamau.mechanics@gmail.com
+
+# WebSocket client to ZoMa Brain (zoma_audio_client.py, zoma_mic_client.py, zoma_state.py)
+websockets
+
+# SPI driver for the LuMini LED ring (zoma_state.py -> lumini_ring.py)
+spidev
+
+# wifi_diag_publisher.py / audio_diag_publisher.py additionally need rclpy,
+# which comes from the ROS 2 Humble install/container, not pip -- see
+# docs/STARTUP_GUIDE.md.
