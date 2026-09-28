@@ -52,10 +52,17 @@ no magnetometer), so yaw is a relative heading, not a compass bearing.
 
 ### 2.3 Status indicator — ZoMa Brain interaction ring
 
-A 5V WS2812 individually-addressable RGB LED ring (16 LEDs) gives a visual readout
-of what ZoMa Brain is doing — a distinct color/animation for "listening,"
-"thinking," and "speaking" — so interaction has visible turn-taking instead of
-feeling like a black box.
+A SparkFun LuMini 2" ring (40× APA102 LEDs), driven from the Raspberry Pi's
+hardware SPI, gives a visual readout of what ZoMa Brain is doing — a distinct
+color/animation for "listening," "thinking," and "speaking" — so interaction has
+visible turn-taking instead of feeling like a black box. APA102 was chosen over
+WS2812 specifically because it's driven from the Pi: WS2812 needs
+microsecond-exact single-wire timing that a general-purpose Linux computer can't
+guarantee, while APA102's separate clock line (SPI) tolerates the Pi's timing
+jitter without corrupting colors.
+
+This is a separate ring from the TX remote's WS2812B connection-status ring
+(§2.6) — different board, different LEDs, different purpose.
 
 ### 2.4 Arm (reserved)
 

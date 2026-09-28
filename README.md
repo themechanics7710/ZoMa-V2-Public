@@ -7,6 +7,8 @@ CNC machine: just a ruler, a blade, and a small pile of off-the-shelf electronic
 
 This repository is the complete, public source for the build: firmware, onboard
 software, the AI backend, the web dashboard, and the mechanical design files.
+The full build is documented as a 20-episode video series on
+[**TheMechanics-Lab on YouTube**](https://www.youtube.com/@TheMechanics-Lab).
 
 ---
 
@@ -18,9 +20,9 @@ software, the AI backend, the web dashboard, and the mechanical design files.
   that supports interrupting it mid-sentence, and a tiered inference system —
   instant canned replies for simple things, a fast local model for everyday
   conversation, and a larger model for anything that needs deeper reasoning.
-- **Shows its state** through a 16-LED ring that lights up differently depending
-  on whether it's listening, thinking, or speaking — so interacting with it feels
-  less like talking to a black box.
+- **Shows its state** through a 40-LED ring (SparkFun LuMini, APA102) that lights
+  up differently depending on whether it's listening, thinking, or speaking — so
+  interacting with it feels less like talking to a black box.
 - **Drives manually** too, over a PS5 DualSense controller paired to a dedicated
   ESP32 transmitter, relayed to the robot over a low-latency ESP-NOW link.
 
@@ -83,11 +85,23 @@ Controller (PS5) ─▶ ESP32 TX ─ESP-NOW─▶ ESP32 RX ─▶ motors / encod
 If you're new to the project, reading those in order will take you from "what
 is this robot" to "I have it running."
 
-ZoMa is being built and documented as a 20-day build, released as a video
-series. Days 1–8 (chassis, drive base, power, and the RX/TX firmware link) are
-complete; Days 9–20 (sensors, the onboard computer, and ZoMa Brain) are in
-progress. ROS 2 and Nav2 — autonomous SLAM navigation — are planned for a
-second season and aren't part of this build.
+ZoMa was built and documented as a 20-day build, released as a video series on
+[TheMechanics-Lab](https://www.youtube.com/@TheMechanics-Lab). ROS 2 and Nav2 —
+autonomous SLAM navigation — are planned for a second season and aren't part of
+this build.
+
+## License
+
+Hardware, CAD, 3D-printable designs, and documentation
+(`mechanical/`, `docs/`) are licensed under
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) —
+personal/educational use and remixing only, no commercial use.
+
+Software and firmware (`esp32_tx/`, `esp32_rx/`, `pi/`, `monster/`, `web/`)
+are licensed under [GPL v3](https://www.gnu.org/licenses/gpl-3.0.html).
+
+See [`LICENSE`](LICENSE) for the full text. For commercial inquiries or kit
+licensing, contact mamau.mechanics@gmail.com.
 
 ---
 
