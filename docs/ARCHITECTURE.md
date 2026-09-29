@@ -136,7 +136,7 @@ ZoMa-V2-Public/
 ├── docs/               # this file, WIRE_CONNECTIONS.md, SETUP.md, STARTUP_GUIDE.md, EQUIPMENT.md
 ├── esp32_tx/           # PS5 pairing + ESP-NOW to RX
 ├── esp32_rx/           # motors, IMU, encoders, micro-ROS client, e-stop
-├── pi/                 # camera capture, micro-ROS agent, ZoMa Brain audio/LED clients
+├── pi/                 # ROS 2 container, MediaMTX config, ZoMa Brain audio/LED clients
 ├── monster/            # camera pipeline, ZoMa Brain (off-board GPU machine)
 ├── web/                # dashboard / web UI
 └── mechanical/         # CAD/cut files for the chassis, and 3D-printable design files

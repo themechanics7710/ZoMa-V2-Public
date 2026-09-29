@@ -1,22 +1,82 @@
 # ZoMa — Startup Guide
 
-How to bring the whole system up: the Raspberry Pi's camera stream and
-audio/LED processes, then the off-board GPU machine's (**Monster** — see
-[ARCHITECTURE.md](ARCHITECTURE.md)) Kokoro TTS service and the ZoMa Brain
-server itself. Start the Pi first, then Monster — ZoMa Brain connects out to
-the Pi's camera stream on startup.
+How to bring the whole system up: the Raspberry Pi's OS setup, ROS 2
+container, camera stream, and audio/LED processes, then the off-board GPU
+machine's (**Monster** — see [ARCHITECTURE.md](ARCHITECTURE.md)) Kokoro TTS
+service and the ZoMa Brain server itself, and finally the web dashboard.
+Start the Pi first, then Monster — ZoMa Brain connects out to the Pi's
+camera stream on startup.
 
 ---
 
 ## 1. Raspberry Pi
 
-### 1.1 Camera stream (MediaMTX)
+### 1.0 Base OS setup
+
+- Flash **Raspberry Pi OS (64-bit)** onto the microSD card with the
+  [Raspberry Pi Imager](https://www.raspberrypi.com/software/) — use its
+  "Edit Settings" step to set a hostname (`rb1` throughout this repo's
+  examples), enable SSH, and configure Wi-Fi, so the Pi is reachable headless
+  on first boot.
+- Enable the camera, I2C, and SPI interfaces. **SPI is off by default** and
+  is needed for the LuMini LED ring's `spidev` driver (§1.3):
+  ```bash
+  sudo raspi-config
+  # Interface Options -> Camera -> Enable
+  # Interface Options -> I2C     -> Enable
+  # Interface Options -> SPI     -> Enable
+  sudo reboot
+  ```
+- Install Docker (needed for the ROS 2 container below):
+  ```bash
+  curl -fsSL https://get.docker.com | sh
+  sudo usermod -aG docker $USER   # log out/in for this to take effect
+  ```
+
+### 1.1 ROS 2 container (`zoma_ros_pi_v2`)
+
+The Pi runs a single long-lived Docker container providing ROS 2 Humble — it
+hosts the micro-ROS agent that bridges `esp32_rx`'s `deploy_ros` firmware to
+the rest of the system, and it's where the `-hud` diagnostics scripts (§1.3)
+run, since `rclpy` isn't installed on the Pi host directly.
+
+[`pi/docker/Dockerfile`](../pi/docker/Dockerfile) builds a container with the
+same runtime characteristics as the one this build actually runs
+(reconstructed against the live container's `docker inspect` output, not the
+original Dockerfile — if you have your own, use it instead):
+
+```bash
+docker build -t zoma_ros_pi_v2 pi/docker/
+docker run -d --name zoma_ros_pi_v2 \
+  --privileged \
+  --network host \
+  --restart always \
+  -v /dev:/dev \
+  -v ~/zoma_nav_ws:/zoma_nav_ws \
+  zoma_ros_pi_v2
+```
+
+- `--privileged` + `-v /dev:/dev` — device access for the micro-ROS agent
+  (the RX board's USB-serial connection) and other host devices as needed.
+- `--network host` — required for ROS 2's DDS discovery to work correctly
+  between the container and the rest of the Pi.
+- `-v ~/zoma_nav_ws:/zoma_nav_ws` — an empty workspace directory, bind-mounted
+  so ROS 2 packages can be developed without rebuilding the image. Empty for
+  now; this is where Season 2's Nav2 packages will eventually live.
+- The container's entrypoint keeps it running (`tail -f /dev/null`) rather
+  than running a single foreground process — `start_zoma_audio_hud_pi.sh`
+  `docker cp`'s a script in and `docker exec`'s it there on demand, instead
+  of the container doing anything on its own.
+
+### 1.2 Camera stream (MediaMTX)
 
 The camera feed is served by [MediaMTX](https://github.com/bluenviron/mediamtx)
 (a standalone media server) running on the Pi, republishing the Pi camera as
 both RTSP (for ZoMa Brain's vision pipeline) and WebRTC (for the web
-dashboard's live feed). It isn't part of this repo — it's a general-purpose
-open-source tool, installed and configured directly on the Pi.
+dashboard's live feed), using MediaMTX's built-in Raspberry Pi Camera source
+— no separate `rpicam-vid`/`ffmpeg` piping needed. MediaMTX itself isn't part
+of this repo — it's a general-purpose open-source tool, installed directly on
+the Pi.
 
 **Install:**
 
@@ -25,30 +85,32 @@ open-source tool, installed and configured directly on the Pi.
 curl -LO https://github.com/bluenviron/mediamtx/releases/latest/download/mediamtx_linux_arm64v8.tar.gz
 tar -xzf mediamtx_linux_arm64v8.tar.gz
 sudo mv mediamtx /usr/local/bin/
-sudo apt install -y ffmpeg   # rpicam-apps ships preinstalled on Raspberry Pi OS
 ```
 
-**Configure** (`mediamtx.yml`) to publish the Pi camera on the `cam` path, at
-the ports ZoMa Brain and the web dashboard already expect by default (RTSP
-`8554`, WebRTC `8889`):
+**Configure:** use [`pi/mediamtx.yml`](../pi/mediamtx.yml) — MediaMTX's
+standard default config with one path defined, at the ports ZoMa Brain and
+the web dashboard already expect by default (RTSP `8554`, WebRTC `8889`):
 
 ```yaml
-rtspAddress: :8554
-webrtcAddress: :8889
-
 paths:
   cam:
-    runOnInit: >
-      rpicam-vid -t 0 --width 1280 --height 720 --framerate 30 --codec h264
-      --inline --listen -o - |
-      ffmpeg -f h264 -i - -c copy -f rtsp rtsp://localhost:8554/cam
-    runOnInitRestart: yes
+    source: rpiCamera
+    rpiCameraWidth: 1920
+    rpiCameraHeight: 1080
+    rpiCameraFPS: 30
+    rpiCameraBitrate: 4500000
+    rpiCameraCodec: hardwareH264
+    rpiCameraHDR: false
+    rpiCameraShutter: 8000
+    rpiCameraMetering: centre
+    rpiCameraEV: 0.5
+    rpiCameraDenoise: "cdn_off"
 ```
 
 **Run:**
 
 ```bash
-mediamtx /path/to/mediamtx.yml
+mediamtx /path/to/pi/mediamtx.yml
 ```
 
 Set this up as a systemd service so it starts at boot. Verify it's working
@@ -59,7 +121,7 @@ ffplay rtsp://<pi-host>:8554/cam       # RTSP, from another machine
 # or open http://<pi-host>:8889/cam/ in a browser for the WebRTC view
 ```
 
-### 1.2 Audio, mic, and LED status scripts
+### 1.3 Audio, mic, and LED status scripts
 
 These are the scripts in [`pi/scripts/zoma-audio-led/`](../pi/scripts/zoma-audio-led/):
 `zoma_audio_client.py` (plays ZoMa Brain's TTS output), `zoma_mic_client.py`
@@ -110,9 +172,8 @@ watch startup.
 
 **The `-hud` flag** runs `wifi_diag_publisher.py` and `audio_diag_publisher.py`
 as ROS 2 nodes (they need `rclpy`, which isn't installed on the Pi host
-directly). The launcher expects a running ROS 2 Humble container named
-`zoma_ros_pi_v2` and `docker cp`'s each script into it before running it
-there — start that container first if you want `-hud` diagnostics.
+directly) inside the `zoma_ros_pi_v2` container (§1.1) — start that container
+first if you want `-hud` diagnostics.
 
 **ReSpeaker recovery:** if mic capture wedges (repeated fast `arecord`
 failures), `zoma_mic_client.py`'s recovery path calls
@@ -120,6 +181,36 @@ failures), `zoma_mic_client.py`'s recovery path calls
 `respeaker/xvf_init.sh`. Run `xvf_init.sh` once manually after first setting
 up the mic array, and wire it into a systemd unit that runs at boot, before
 the audio/LED scripts start.
+
+### 1.4 Enrolling a voice for speaker ID
+
+ZoMa Brain's speaker ID matches incoming mic audio against a "voice gallery"
+of short recordings — `monster/zoma-brain/data/voice_gallery/*.wav` on
+Monster. Record with the same mic the robot actually uses — accuracy depends
+on matching the real microphone, not a phone or laptop mic — directly on the
+Pi:
+
+```bash
+sudo apt install -y sox
+
+# ~8s of normal speech, using the ReSpeaker mic array:
+arecord -D plughw:CARD=Array,DEV=0 -f S16_LE -r 16000 -c 2 -t wav -d 8 raw_take1.wav
+
+# Trim leading/trailing silence, normalize volume, and down-mix to mono:
+sox raw_take1.wav -c 1 Alex_take1.wav norm silence 1 0.1 1% reverse silence 1 0.1 1% reverse
+```
+
+Record a few takes per person (`Alex_take1.wav`, `Alex_take2.wav`, ...) —
+`zoma_brain_server.py`'s `init_speaker_id()` groups every `.wav` file by the
+part of its filename before the first underscore, and averages all of a
+person's takes into one profile. The exact sample rate/channel count of the
+source recording doesn't matter beyond this — every gallery file is
+auto-converted to mono/16kHz on load — but the filename prefix is what
+identifies the person.
+
+Copy the finished files into `monster/zoma-brain/data/voice_gallery/` on
+Monster (they're gitignored there — personal recordings are never
+committed), then (re)start `zoma_brain_server.py` to pick them up.
 
 ---
 
@@ -266,6 +357,26 @@ python zoma_brain_server.py --name Clorian --prompt clorian_prompt.txt --lang fr
 ```bash
 python zoma_brain_server.py --name Clorian --prompt clorian_prompt.txt --lang esp --tts-voice em_alex --tts-speed 1.15
 ```
+
+---
+
+## 3. Web dashboard
+
+`web/index.html` is a static page — no build step, no server-side code.
+
+1. Open it in a text editor and set the two `<YOUR_ZOMA_BRAIN_HOST>`
+   placeholders (in the two `<script>` blocks) to Monster's LAN address — the
+   same host `zoma_brain_server.py` is running on.
+2. Serve the `web/` directory with a simple HTTP server — more reliable than
+   opening the file directly, since the camera `<iframe>` can hit
+   mixed-content restrictions when loaded from a bare `file://` page:
+   ```bash
+   cd web/
+   python3 -m http.server 8000
+   ```
+3. Open `http://<any machine on your LAN>:8000/` in a browser. Both the Pi's
+   camera stream (§1.2) and `zoma_brain_server.py` (§2.3) need to be running
+   first.
 
 ---
 

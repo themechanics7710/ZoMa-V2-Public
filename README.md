@@ -62,7 +62,7 @@ Controller (PS5) ─▶ ESP32 TX ─ESP-NOW─▶ ESP32 RX ─▶ motors / encod
 | [`docs/`](docs/) | Prerequisites, architecture, wiring reference, setup instructions, and how to start the AI backend — start here |
 | [`esp32_rx/`](esp32_rx/) | Firmware for the ESP32 that drives the motors, reads the encoders/IMU, and talks to the Pi over micro-ROS |
 | [`esp32_tx/`](esp32_tx/) | Firmware for the ESP32 that pairs with a PS5 controller and relays drive commands over ESP-NOW |
-| [`pi/`](pi/) | Raspberry Pi–side scripts: audio streaming, the LED status ring client, mic-array control |
+| [`pi/`](pi/) | The ROS 2 container, MediaMTX camera config, and audio/mic/LED status scripts |
 | [`monster/`](monster/) | The off-board AI backend — ZoMa Brain: speech recognition, the LLM engine, vision, memory, and text-to-speech |
 | [`web/`](web/) | The browser dashboard: live camera feed with a HUD overlay, and a chat interface into ZoMa Brain |
 | [`mechanical/`](mechanical/) | CAD/cut files for the acrylic chassis, and [3D-printable design files](mechanical/3d_design/) for printed parts |

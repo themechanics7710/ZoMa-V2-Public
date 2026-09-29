@@ -13,7 +13,7 @@ ZoMa-V2-Public/
 ├── docs/            # ARCHITECTURE.md, WIRE_CONNECTIONS.md, SETUP.md (this file), STARTUP_GUIDE.md, EQUIPMENT.md
 ├── esp32_tx/        # PS5 pairing + ESP-NOW to RX
 ├── esp32_rx/        # motors, IMU, encoders, micro-ROS client, e-stop
-├── pi/              # camera capture, micro-ROS agent, ZoMa Brain audio/LED clients
+├── pi/              # ROS 2 container, MediaMTX config, ZoMa Brain audio/LED clients
 ├── monster/         # camera pipeline, ZoMa Brain (off-board GPU machine)
 ├── web/             # dashboard / web UI
 └── mechanical/      # CAD/cut files for the chassis, and 3D-printable design files
@@ -50,18 +50,24 @@ committed — see each component's section below for how they're supplied instea
 
 ## 3. Onboard software (Raspberry Pi)
 
-- ROS 2 Humble, run in Docker — runs the micro-ROS agent that bridges the RX
-  board's `deploy_ros` firmware to the rest of the system.
+- Raspberry Pi OS (64-bit), with the camera, I2C, and SPI interfaces enabled
+  via `raspi-config` (SPI is off by default and is needed for the LuMini LED
+  ring). See [STARTUP_GUIDE.md](STARTUP_GUIDE.md#10-base-os-setup).
+- ROS 2 Humble, run in Docker (`pi/docker/Dockerfile`) — runs the micro-ROS
+  agent that bridges the RX board's `deploy_ros` firmware to the rest of the
+  system, and hosts the `-hud` diagnostics scripts. See
+  [STARTUP_GUIDE.md](STARTUP_GUIDE.md#11-ros-2-container-zoma_ros_pi_v2).
 - [MediaMTX](https://github.com/bluenviron/mediamtx) serves the Pi camera as
   both RTSP (for ZoMa Brain's vision pipeline) and WebRTC (for the web
-  dashboard) — not part of this repo, installed and configured directly on
-  the Pi. See [STARTUP_GUIDE.md](STARTUP_GUIDE.md#11-camera-stream-mediamtx).
+  dashboard) — not part of this repo, installed directly on the Pi and
+  configured with [`pi/mediamtx.yml`](../pi/mediamtx.yml). See
+  [STARTUP_GUIDE.md](STARTUP_GUIDE.md#12-camera-stream-mediamtx).
 - Boot automation: a systemd service launches the onboard stack (micro-ROS agent,
   MediaMTX, audio/LED host processes) into a tmux session, so it's inspectable
   and restartable without re-running everything by hand.
 - The scripts in `pi/scripts/` reference the repo's install location on the Pi
   through a variable near the top of each script — set that to wherever you clone
-  this repo on your own Pi. See [STARTUP_GUIDE.md](STARTUP_GUIDE.md#12-audio-mic-and-led-status-scripts)
+  this repo on your own Pi. See [STARTUP_GUIDE.md](STARTUP_GUIDE.md#13-audio-mic-and-led-status-scripts)
   for how to start them.
 - EKF, a lidar driver, and Nav2 are part of the planned Season 2 autonomous
   navigation stack — not part of this build. See
