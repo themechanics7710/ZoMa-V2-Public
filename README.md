@@ -59,7 +59,7 @@ Controller (PS5) ─▶ ESP32 TX ─ESP-NOW─▶ ESP32 RX ─▶ motors / encod
 
 | Folder | What's in it |
 |---|---|
-| [`docs/`](docs/) | Architecture, wiring reference, setup instructions, and how to start the AI backend — start here |
+| [`docs/`](docs/) | Prerequisites, architecture, wiring reference, setup instructions, and how to start the AI backend — start here |
 | [`esp32_rx/`](esp32_rx/) | Firmware for the ESP32 that drives the motors, reads the encoders/IMU, and talks to the Pi over micro-ROS |
 | [`esp32_tx/`](esp32_tx/) | Firmware for the ESP32 that pairs with a PS5 controller and relays drive commands over ESP-NOW |
 | [`pi/`](pi/) | Raspberry Pi–side scripts: audio streaming, the LED status ring client, mic-array control |
@@ -69,16 +69,19 @@ Controller (PS5) ─▶ ESP32 TX ─ESP-NOW─▶ ESP32 RX ─▶ motors / encod
 
 ## Where to start
 
-1. **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — the mechanical and
-   electrical design, and how the software stack fits together. Read this first.
-2. **[docs/WIRE_CONNECTIONS.md](docs/WIRE_CONNECTIONS.md)** — a flat pin-by-pin
+1. **[docs/PREREQUISITES.md](docs/PREREQUISITES.md)** — what you should already
+   know, what you'll pick up along the way, and what this build actually
+   demands. Read this first.
+2. **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — the mechanical and
+   electrical design, and how the software stack fits together.
+3. **[docs/WIRE_CONNECTIONS.md](docs/WIRE_CONNECTIONS.md)** — a flat pin-by-pin
    wiring reference for every connection in the build.
-3. **[docs/SETUP.md](docs/SETUP.md)** — the development environment for each
+4. **[docs/SETUP.md](docs/SETUP.md)** — the development environment for each
    component (firmware toolchain, Pi software, the GPU backend) and how to build
    your own copy.
-4. **[docs/STARTUP_GUIDE.md](docs/STARTUP_GUIDE.md)** — how to actually launch
+5. **[docs/STARTUP_GUIDE.md](docs/STARTUP_GUIDE.md)** — how to actually launch
    the ZoMa Brain server and its dependencies, with the full CLI reference.
-5. **[docs/EQUIPMENT.md](docs/EQUIPMENT.md)** — the full parts and tools list,
+6. **[docs/EQUIPMENT.md](docs/EQUIPMENT.md)** — the full parts and tools list,
    organized by build day, so you know exactly what to have on hand before you
    start.
 
