@@ -85,7 +85,7 @@ standoffs, bumpers, edge profiles, mast cap, brackets, and the TX case) live in
 | Omniwheel (front, free-spinning) | 2 | 48 mm |
 | 3D-Printed Omniwheel support bracket | 1 per omniwheel | Screwed to drive base |
 | M3 axle bolt | 1 per omniwheel | 40 mm |
-| Flanged bearings | 2 per omniwheel | One each side of the wheel |
+| Flanged bearings F683ZZ, 3mm x 7mm x3 mm | 4 | One each side of the wheel |
 | M3 washer | 1 per omniwheel | |
 | M3 nyloc (self-locking) nut | 1 per omniwheel | |
 | Rear drive wheels | 2 | 65 mm nominal |
