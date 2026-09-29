@@ -82,8 +82,8 @@ standoffs, bumpers, edge profiles, mast cap, brackets, and the TX case) live in
 
 | Item | Qty | Spec |
 |---|---|---|
-| Omniwheel (front, free-spinning) | 1–2 | 48 mm |
-| Omniwheel support bracket | 1 per omniwheel | Screwed to drive base |
+| Omniwheel (front, free-spinning) | 2 | 48 mm |
+| 3D-Printed Omniwheel support bracket | 1 per omniwheel | Screwed to drive base |
 | M3 axle bolt | 1 per omniwheel | 40 mm |
 | Flanged bearings | 2 per omniwheel | One each side of the wheel |
 | M3 washer | 1 per omniwheel | |
@@ -115,7 +115,7 @@ Minimum **5 cm** clearance between the bottom deck and the floor — enough to c
 | Item | Qty | Spec |
 |---|---|---|
 | LiPo battery (Zeee) | 1 | 2S, 7.4 V nominal / 8.4 V full, 5200 mAh |
-| Battery case | 1 | Mounted centered on bottom deck |
+| 3D-printed Battery case | 1 | Mounted centered on bottom deck |
 | Battery connector | 1 | Matches the plug on your battery's lead |
 | WAGO lever connectors | 2+ | 1-in / 5-out ground; separate positive |
 | Power switch | 1 | Mounts in the Day 1 cutout, faces the floor |
@@ -124,7 +124,7 @@ Minimum **5 cm** clearance between the bottom deck and the floor — enough to c
 | Ceramic capacitors | ~6 | 0.1 µF |
 | Electrolytic capacitors | — | 470 µF, 16 V+ (most branches) |
 | Electrolytic capacitor | 1 | 1000 µF, 16 V+ (motor branch) |
-| Perfboard standoffs | — | |
+| 3D-printed Perfboard standoffs | — | |
 | LM2596 buck converter | 2 | #1 motor rail, #2 ESP32 rail |
 | Buck converter for Raspberry Pi 4 | 1 | Must supply 5.1 V at ≥3 A |
 | UBEC | 1 | Dedicated 5V UBEC, lidar branch — installed now, lidar itself is Season 2 |
@@ -235,7 +235,7 @@ ESP-NOW link between the Day 8 transmitter and the robot's ESP32, then first man
 | Item | Qty | Spec |
 |---|---|---|
 | Robot ESP32 as ESP-NOW receiver | — | Reused from Day 4 |
-| VL53L1X time-of-flight distance sensor | 1 | I2C, plus XSHUT and interrupt lines to the ESP32 — front proximity safety (slows the motors, rather than a hard stop) |
+| VL53L1X time-of-flight distance sensor (optional) | 1 | I2C, plus XSHUT and interrupt lines to the ESP32 — front proximity safety (slows the motors, rather than a hard stop) |
 | Floor / corridor space, obstacle course, carpet | — | Drive tests |
 
 ---
