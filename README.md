@@ -84,6 +84,8 @@ Controller (PS5) ─▶ ESP32 TX ─ESP-NOW─▶ ESP32 RX ─▶ motors / encod
 6. **[docs/EQUIPMENT.md](docs/EQUIPMENT.md)** — the full parts and tools list,
    organized by build day, so you know exactly what to have on hand before you
    start.
+7. **[docs/PROGRAM.md](docs/PROGRAM.md)** — the day-by-day, episode-by-episode
+   build calendar, matching the equipment list.
 
 If you're new to the project, reading those in order will take you from "what
 is this robot" to "I have it running."
