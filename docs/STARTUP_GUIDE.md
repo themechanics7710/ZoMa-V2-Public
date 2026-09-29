@@ -218,7 +218,11 @@ pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu121
 **Prerequisites:**
 
 - **NVIDIA CUDA GPU available** — Whisper initializes with `device="cuda"` by
-  default; a functional CUDA GPU is required.
+  default (no CPU fallback), and Tier 1 local inference (Qwen via Ollama)
+  needs it too. Running ZoMa fully GPU-free — targeting Claude for every
+  query instead of local Qwen, and making Whisper's device configurable —
+  isn't implemented in this build; see
+  [ARCHITECTURE.md](ARCHITECTURE.md#3-software-stack).
 - **Ollama running**, with the Qwen models pulled — see §2.2 above.
 - **Kokoro TTS running** — verify with `curl http://127.0.0.1:8770/health`
   (see §2.1 above).

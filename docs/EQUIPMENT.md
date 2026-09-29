@@ -279,6 +279,8 @@ ESP-NOW link between the Day 8 transmitter and the robot's ESP32, then first man
 
 Software only otherwise — video streaming, and the local LLM/vision-language model stack on the server (ZoMa Brain's conversational AI). **This does not include ROS 2 or Nav2** — autonomous SLAM navigation is Season 2 work, not part of this 20-day build; see [Reserved for Season 2](#reserved-for-season-2-not-needed-for-the-20-day-build) below.
 
+Qwen (text + vision) runs locally on Monster's GPU via Ollama; Claude is also available as a manual "uplink" for deeper reasoning, including vision. Running without a local GPU by defaulting to Claude instead would need a code change this build doesn't implement — see [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ---
 
 ### Days 17–19 — Teaching ZoMa to Talk and Listen

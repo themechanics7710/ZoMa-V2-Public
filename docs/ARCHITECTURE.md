@@ -103,11 +103,21 @@ Any RX firmware change is proven on `debug_bench` before being run under
 
 - **ZoMa Brain**: tiered inference —
   - Tier 0: reflex / canned responses, near-instant.
-  - Tier 1: small local model, fast first-token response.
-  - Tier 2: larger model on the off-board GPU machine (Monster), for deeper
-    reasoning — async, not blocking basic interaction.
+  - Tier 1: local Qwen models (`qwen3:14b` text, `qwen2.5vl:7b` vision) via
+    Ollama, running on Monster's GPU — fast first-token response.
+  - Tier 2 / uplink: Claude (Anthropic API), for deeper reasoning — reached
+    with a spoken "start uplink" command, not automatic. Claude also handles
+    vision directly (a camera frame is attached to the API call), so uplink
+    sessions aren't text-only.
   - Voice pipeline: TTS output with barge-in interrupt; STT/mic input for
     fully hands-free conversation.
+
+**Running without a local GPU:** Monster's GPU is what Tier 1 (local Qwen)
+and Whisper (speech-to-text) need — Whisper is hardcoded to `device="cuda"`
+with no CPU fallback. Without a GPU, ZoMa could still work by making Claude
+the default path for every query instead of only the manual uplink switch,
+and by making Whisper's device configurable — but that's a code change this
+build doesn't implement, only documenting the option here.
 
 ## 4. Planned — autonomous navigation (Season 2)
 
