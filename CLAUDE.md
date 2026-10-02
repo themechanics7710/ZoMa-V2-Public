@@ -1,0 +1,1 @@
+@ZOMA_AI_PARTNER.md
