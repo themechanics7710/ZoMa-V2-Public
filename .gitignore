@@ -40,3 +40,7 @@ monster/zoma-brain/pictures/*
 !monster/zoma-brain/pictures/.gitkeep
 pi/scripts/zoma-audio-led/sounds/*
 !pi/scripts/zoma-audio-led/sounds/.gitkeep
+
+# A builder's own progress notes (see MY_PROGRESS.template.md) -- personal,
+# never committed.
+MY_PROGRESS.md

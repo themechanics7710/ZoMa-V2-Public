@@ -12,6 +12,44 @@ The full build is documented as a 20-episode video series on
 
 ---
 
+## Build ZoMa with an AI partner
+
+This repo ships a prompt, [`ZOMA_AI_PARTNER.md`](ZOMA_AI_PARTNER.md), that turns
+Claude into a day-by-day build coach for ZoMa — it reads the repo's own docs as
+its source of truth, never invents specs, and speaks whatever language you
+write in. Three ways to use it:
+
+1. **Claude Chat** — download the prompt file (raw link:
+   [`ZOMA_AI_PARTNER.md`](https://raw.githubusercontent.com/themechanics7710/ZoMa-V2-Public/main/ZOMA_AI_PARTNER.md)),
+   create a Claude Project, paste the file's contents in as the project's
+   custom instructions, and give the project access to this repo (a GitHub
+   connector in the project's knowledge, or just attach
+   [`docs/PROGRAM.md`](docs/PROGRAM.md), [`docs/EQUIPMENT.md`](docs/EQUIPMENT.md),
+   and whichever files cover your current day). Then send: **"I'm starting
+   the ZoMa build."**
+2. **Claude Code** — clone the repo and run Claude Code inside it:
+   ```bash
+   git clone https://github.com/themechanics7710/ZoMa-V2-Public.git
+   cd ZoMa-V2-Public
+   claude
+   ```
+   `CLAUDE.md` loads the coach automatically. Then say: **"I'm starting the
+   ZoMa build."**
+3. **Any other AI assistant** — paste `ZOMA_AI_PARTNER.md` as your first
+   message and attach the relevant docs yourself.
+
+Each session, the coach will: recap where you left off, scope what today
+covers (and what it doesn't), point you to the right YouTube episode, check
+you have the day's parts from `EQUIPMENT.md`, walk you through the build one
+step at a time, run that day's checkpoint before calling it done, and leave
+you a one-line teaser for tomorrow — crediting TheMechanics as the build's
+designer throughout.
+
+ZoMa is designed and built by **TheMechanics**; the full series lives on
+[TheMechanics-Lab](https://www.youtube.com/@TheMechanics-Lab).
+
+---
+
 ## What ZoMa does
 
 - **Sees and hears** through an onboard camera and a far-field microphone array,
@@ -69,6 +107,9 @@ Controller (PS5) ─▶ ESP32 TX ─ESP-NOW─▶ ESP32 RX ─▶ motors / encod
 
 ## Where to start
 
+0. **[ZOMA_AI_PARTNER.md](ZOMA_AI_PARTNER.md)** — the fastest way in: an AI
+   coach that guides you through the build day by day. See
+   "[Build ZoMa with an AI partner](#build-zoma-with-an-ai-partner)" above.
 1. **[docs/PREREQUISITES.md](docs/PREREQUISITES.md)** — what you should already
    know, what you'll pick up along the way, and what this build actually
    demands. Read this first.
@@ -87,6 +128,10 @@ Controller (PS5) ─▶ ESP32 TX ─ESP-NOW─▶ ESP32 RX ─▶ motors / encod
 7. **[docs/PROGRAM.md](docs/PROGRAM.md)** — the day-by-day, episode-by-episode
    build calendar, matching the equipment list.
 
+Building solo without an AI partner? Use
+[`MY_PROGRESS.template.md`](MY_PROGRESS.template.md) to track your own
+measured values and checkpoints as you go.
+
 If you're new to the project, reading those in order will take you from "what
 is this robot" to "I have it running."
 
@@ -104,6 +149,9 @@ personal/educational use and remixing only, no commercial use.
 
 Software and firmware (`esp32_tx/`, `esp32_rx/`, `pi/`, `monster/`, `web/`)
 are licensed under [GPL v3](https://www.gnu.org/licenses/gpl-3.0.html).
+
+The AI build-partner prompt (`ZOMA_AI_PARTNER.md`) is documentation, licensed
+the same as the rest of the docs: CC BY-NC-SA 4.0.
 
 See [`LICENSE`](LICENSE) for the full text. For commercial inquiries or kit
 licensing, contact mamau.mechanics@gmail.com.
