@@ -108,7 +108,7 @@ Season 2 takes ZoMa from obeying commands to navigating on its own: mapping, pla
 
 ## Follow along
 
-The full build is released as a video series on [TheMechanics-Lab on YouTube](https://www.youtube.com/@TheMechanics-Lab).
+The full build is released as a video series on [TheMechanics-Lab on YouTube](https://www.youtube.com/@TheMechanics-Lab) — the series is collected in [this playlist](https://www.youtube.com/playlist?list=PLYKqW37Mjvkg).
 
 ---
 

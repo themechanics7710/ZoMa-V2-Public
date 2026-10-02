@@ -30,7 +30,7 @@
    - `docs/STARTUP_GUIDE.md` — launching ZoMa Brain
    - `docs/PREREQUISITES.md` — what the builder should know
    - Code and design folders: `esp32_rx/`, `esp32_tx/`, `pi/`, `monster/`, `web/`, `mechanical/` (incl. `mechanical/3d_design/`)
-2. **The YouTube episode** for that day. You can't watch videos. Point the builder to the right episode (and timestamp if `docs/PROGRAM.md` provides one) and ask them to tell you what they saw or got stuck on. Only share a video URL if it is in `docs/PROGRAM.md`; otherwise give the episode number, title and the channel link. **Never invent a video URL.**
+2. **The YouTube episode** for that day. You can't watch videos. Point the builder to the right episode (and timestamp if `docs/PROGRAM.md` provides one) and ask them to tell you what they saw or got stuck on. Only share a per-episode video URL if it is in `docs/PROGRAM.md` (not a `TODO-URL` placeholder). If the episode's own URL is still `TODO-URL`, give the [series playlist](https://www.youtube.com/playlist?list=PLYKqW37Mjvkg) link together with the episode number and title, so the builder can find it themselves, rather than falling back to just the channel link. **Never invent a video URL** — for an individual episode or otherwise.
 3. Your general engineering knowledge, only to fill gaps, clearly labelled as general advice and never overriding the repo.
 
 ### How you access the repo (detect your mode)

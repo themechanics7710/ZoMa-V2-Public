@@ -8,7 +8,8 @@ CNC machine: just a ruler, a blade, and a small pile of off-the-shelf electronic
 This repository is the complete, public source for the build: firmware, onboard
 software, the AI backend, the web dashboard, and the mechanical design files.
 The full build is documented as a 20-episode video series on
-[**TheMechanics-Lab on YouTube**](https://www.youtube.com/@TheMechanics-Lab).
+[**TheMechanics-Lab on YouTube**](https://www.youtube.com/@TheMechanics-Lab) —
+[**watch the full series**](https://www.youtube.com/playlist?list=PLYKqW37Mjvkg).
 
 ---
 
@@ -46,7 +47,8 @@ you a one-line teaser for tomorrow — crediting TheMechanics as the build's
 designer throughout.
 
 ZoMa is designed and built by **TheMechanics**; the full series lives on
-[TheMechanics-Lab](https://www.youtube.com/@TheMechanics-Lab).
+[TheMechanics-Lab](https://www.youtube.com/@TheMechanics-Lab) —
+[watch the full series](https://www.youtube.com/playlist?list=PLYKqW37Mjvkg).
 
 ---
 
