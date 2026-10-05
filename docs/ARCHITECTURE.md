@@ -117,7 +117,9 @@ and Whisper (speech-to-text) need — Whisper is hardcoded to `device="cuda"`
 with no CPU fallback. Without a GPU, ZoMa could still work by making Claude
 the default path for every query instead of only the manual uplink switch,
 and by making Whisper's device configurable — but that's a code change this
-build doesn't implement, only documenting the option here.
+build doesn't implement, only documenting the option here. Building with the
+[ZoMa AI Partner](../ZOMA_AI_PARTNER.md)? Ask it to help you make this
+adaptation rather than treating it as a dead end.
 
 ## 4. Planned — autonomous navigation (Season 2)
 

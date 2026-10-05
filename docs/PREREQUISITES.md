@@ -4,9 +4,8 @@ ZoMa is a real robot, built by hand, with real hardware and real code. You don't
 
 ## Bring these with you
 
-- **Basic scripting and coding.** You understand variables, loops, functions, and conditionals well enough to follow what a piece of code is meant to do.
-- **Working with AI on a project.** This build is developed with an AI partner, from brainstorming to deployment. You know how to give it clear context, ask for specific changes, and keep the project organized so it stays on track.
-- **Clarity on what the code is doing.** You don't have to write every line yourself. You do need to understand what each part does and why, so you can check it, question it, and steer it.
+- **Working with AI on a project.** This build is developed with an AI partner, from brainstorming to deployment — including writing and adapting code for you if you can't do it yourself. You know how to give it clear context, ask for specific changes, and keep the project organized so it stays on track.
+- **Clarity on what the code is doing.** You don't have to write a single line yourself. You do need to understand what each part does and why, well enough to check it, question it, and steer it.
 - **Git basics.** Clone, commit, push, pull. The whole project lives in a repository, and so does your copy.
 - **A troubleshooting mindset.** Things will go wrong: a wire in the wrong place, a voltage that's off, code that does nothing. You can change one thing at a time, re-test, and keep notes.
 - **Patience with small steps.** Precision matters here. A rushed connection costs more time than a careful one.
@@ -15,6 +14,9 @@ ZoMa is a real robot, built by hand, with real hardware and real code. You don't
 
 Not required on day one. Each of these is shown on camera.
 
+- Basic scripting and coding (variables, loops, functions, conditionals) —
+  useful for following along, but not required: your AI partner can write
+  and explain the code for you.
 - Soldering and reading a multimeter
 - Basic electronics: voltage, current, ground
 - Comfort with a terminal and the command line

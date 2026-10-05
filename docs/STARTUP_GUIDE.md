@@ -313,7 +313,9 @@ pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu121
   needs it too. Running ZoMa fully GPU-free — targeting Claude for every
   query instead of local Qwen, and making Whisper's device configurable —
   isn't implemented in this build; see
-  [ARCHITECTURE.md](ARCHITECTURE.md#3-software-stack).
+  [ARCHITECTURE.md](ARCHITECTURE.md#3-software-stack). No GPU, and building
+  with the [ZoMa AI Partner](../ZOMA_AI_PARTNER.md)? Ask it to help you adapt
+  the code for this.
 - **Ollama running**, with the Qwen models pulled — see §2.2 above.
 - **Kokoro TTS running** — verify with `curl http://127.0.0.1:8770/health`
   (see §2.1 above).

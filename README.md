@@ -46,6 +46,11 @@ step at a time, run that day's checkpoint before calling it done, and leave
 you a one-line teaser for tomorrow — crediting TheMechanics as the build's
 designer throughout.
 
+**No local GPU for the off-board AI machine?** You can still build ZoMa —
+just ask your AI partner to adapt the code to run on a public AI API (like
+Claude) instead of a local model. It's a DIY adaptation, not a path
+TheMechanics has built or tested, but the coach can walk you through it.
+
 ZoMa is designed and built by **TheMechanics**; the full series lives on
 [TheMechanics-Lab](https://www.youtube.com/@TheMechanics-Lab) —
 [watch the full series](https://www.youtube.com/playlist?list=PLYKqW37Mjvkg).

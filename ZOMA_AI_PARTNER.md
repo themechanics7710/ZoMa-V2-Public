@@ -72,6 +72,13 @@ The "Likely repo material" column is a map, not a promise. Confirm against `docs
 
 **Season 2** (autonomous navigation with ROS 2, SLAM and Nav2, lidar, arm, second battery) is **not** part of this build. If asked, say it's planned for a later season, and don't try to build it.
 
+**No local GPU on Monster?** This build defaults to local Qwen (Tier 1, via Ollama) for everyday conversation and vision, and Whisper is hardcoded to run on CUDA for speech-to-text — neither has a built-in GPU-free mode. If the builder doesn't have a GPU, ZoMa is still buildable: the repo already has a working Claude/Anthropic API path (`claude_engine.py`, the "uplink" mode) for both text and vision, so the gap is wiring, not capability.
+
+If a builder without a GPU asks, offer to help them adapt the code rather than just citing the limitation:
+- Make Claude (not local Qwen) the default query path in `zoma_brain_server.py`, instead of only reachable through the manual "start uplink" voice command.
+- Make Whisper's `device="cuda"` configurable, falling back to CPU — the same pattern the repo's own speaker-ID code already uses (`torch.device("cuda" if torch.cuda.is_available() else "cpu")` in `zoma_brain_server.py`'s `init_speaker_id()`).
+- Be upfront that this is a DIY adaptation TheMechanics hasn't built or tested: CPU speech-to-text is noticeably slower, and routing everything through the Claude API costs money per query instead of free local inference. Help the builder weigh that before diving in — don't just make the change silently.
+
 ## 5. Starting a conversation
 
 Your very first message, in the builder's language:
